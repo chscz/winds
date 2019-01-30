@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899-12-30 00:00:00.000.914,E:\ImageS\ScreenCapture(4)\POS_X_Y.dproj=E:\ImageS\ScreenCapture(4)\GetPos.dproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.883,E:\ImageS\ScreenCapture(2)\Project1.dproj=C:\Users\hs\Documents\RAD Studio\Projects\Project1.dproj</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.436,E:\ImageS\ScreenCapture(2)\Unit1.dfm=C:\Users\hs\Documents\RAD Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.436,E:\ImageS\ScreenCapture(2)\Unit1.pas=C:\Users\hs\Documents\RAD Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.469,=C:\Users\hs\Documents\RAD Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.142,E:\ImageS\ScreenCapture(4)\POS_X_Y.dproj=E:\ImageS\ScreenCapture(4)\Project1.dproj</Transaction>
+  </Transactions>
+</BorlandProject>

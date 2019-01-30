@@ -1,0 +1,634 @@
+unit Unit1;
+
+{$DEFINE _LOG_}
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls, Vcl.ImgList
+  , System.Win.Registry, Contnrs, Vcl.ComCtrls, Dateutils, MMSystem;
+
+type
+  TForm1 = class(TForm)
+    pnl_Lock: TPanel;
+    edt_Lock: TEdit;
+    Btn_Lock: TButton;
+    PnlMain: TPanel;
+    LLblMain: TLabel;
+    Btn_Start: TButton;
+    Btn_End: TButton;
+    Btn_Help: TButton;
+    Btn_Minimize: TButton;
+    Btn_Close: TButton;
+    Timer_Cap: TTimer;
+    ImageList_Detect: TImageList;
+    DateTimePicker1: TDateTimePicker;
+    Chk_AutoOff: TCheckBox;
+    Timer_PowerOff: TTimer;
+    Pnl_Ctrl: TPanel;
+    Memo1: TMemo;
+    Edit1: TEdit;
+    Image1: TImage;
+    Image2: TImage;
+    Timer_ActiveChk: TTimer;
+    ImageList_Detect2: TImageList;
+    procedure FormCreate(Sender: TObject);
+    procedure HideTitlebar(Form:TForm);
+    function UserCheck: Boolean;
+    procedure FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure Btn_StartEndClick(Sender: TObject);
+
+    function ScreenCapture:Boolean;
+    function TransColor_0(TransBmp:TBitmap):Tbitmap;
+    function TransColor_1(TransBmp:TBitmap):Tbitmap;
+    function TransColor_2(TransBmp:TBitmap):Tbitmap;
+    function TransColor_test(TransBmp:TBitmap):Tbitmap;
+    function SearchBitmap(bmMain,bmSub: TBitMap): Boolean;
+    procedure Btn_LockClick(Sender: TObject);
+    procedure edt_LockKeyPress(Sender: TObject; var Key: Char);
+    procedure Timer_CapTimer(Sender: TObject);
+    procedure Btn_HelpClick(Sender: TObject);
+    procedure Timer_PowerOffTimer(Sender: TObject);
+    procedure Timer_ActiveChkTimer(Sender: TObject);
+    procedure Edit1KeyPress(Sender: TObject; var Key: Char);
+
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+    //이미지 리스트
+    bmp_1, bmp_2, bmp_3, bmp_4 : TBitmap;
+    Bmp_HEOPOONG : TBitmap;
+
+    //캡쳐본
+    Bmp_MapMain : TBitmap;
+    Bmp_ElveMain : TBitmap;
+    Now_Map : Integer;
+
+    Handle_1 : THandle;
+    foregroundFlag : Boolean;
+
+    Detect_Chk : Boolean;
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm1.edt_LockKeyPress(Sender: TObject; var Key: Char);
+begin
+   if Key = #13 then
+      Btn_LockClick(Btn_Lock);
+end;
+
+procedure TForm1.Btn_LockClick(Sender: TObject);
+//잠금
+var
+   Key_a        : String;
+   LockKey      : Integer;
+   Reg_2        : TRegistry;
+begin
+{
+   Key_a := FormatDateTime('MMDD',Now) + FormatDateTime('YY',Now);
+   Key_b := FormatDateTime('MMDD',Now);
+   LockKey := ((StrToInt(Key_a)-StrToInt(Key_b))*922);
+   LockKey := StrToInt(Copy(IntToStr(LockKey),1,6));
+   LockKey := LockKey*922;
+   LockKey := StrToInt(Copy(IntToStr(LockKey),1,6));
+}
+   Key_a := FormatDateTime('HHDDMM',Now);
+   LockKey := ((StrToInt(Key_a)*922)*5);
+   LockKey := StrToInt(Copy(IntToStr(LockKey),1,6));
+
+   if IntToStr(LockKey) = edt_Lock.Text then
+   begin
+      try
+         Reg_2 := TRegistry.Create;
+         Reg_2.RootKey := HKEY_CURRENT_USER;
+         Reg_2.OpenKey('\Software\MicroSoft\Windows Network', True);
+         Reg_2.WriteString('Release Lock_5',DateToStr(now));
+      finally
+         Reg_2.CloseKey;
+         Reg_2.Free;
+      end;
+      pnl_Lock.Visible := False;
+      PnlMain.Enabled := True;
+//      Btn_StartEndClick(Btn_Start);
+   end else begin
+      MessageDlg('키 불일치',mtError,[mbOK],0);
+   end;
+end;
+
+function TForm1.UserCheck: Boolean;
+//유저체크
+var
+   Reg_1 : TRegistry;
+begin
+   result := False;
+   try
+      Reg_1 := TRegistry.Create;
+      Reg_1.RootKey := HKEY_CURRENT_USER;
+      Reg_1.OpenKey('\Software\MicroSoft\Windows Network', True);
+      if not Reg_1.ValueExists('Release Lock_5') then
+      begin
+         pnl_Lock.Height    := Self.Height;
+         pnl_Lock.Width     := Self.Width;
+         pnl_Lock.Top       := 25;
+         pnl_Lock.Left      := 0;
+         pnl_Lock.Color     := PnlMain.Color;
+         edt_Lock.Left      := (pnl_Lock.Width - edt_Lock.Width) div 2;
+         edt_Lock.Top       := pnl_Lock.Height div 4;
+         Btn_Lock.Top       := edt_Lock.Top + edt_Lock.Height*2;
+         Btn_Lock.Left      := (pnl_Lock.Width - Btn_Lock.Width) div 2;
+
+         PnlMain.Enabled := False;
+         pnl_Lock.BringToFront;
+         pnl_Lock.Visible := True;
+      end else
+         result := True;
+   finally
+      Reg_1.CloseKey;
+      Reg_1.Free;
+   end;
+end;
+
+procedure TForm1.HideTitlebar(Form:TForm);
+//폼 컨트롤 - 타이틀 숨기기
+var
+   Save : LongInt;
+begin
+   if Form.BorderStyle=bsNone then Exit;
+   Save:=GetWindowLong(Form.Handle,gwl_Style);
+   if (Save and ws_Caption)=ws_Caption then
+   begin
+      case Form.BorderStyle of
+         bsSingle,bsSizeable : SetWindowLong(Form.Handle,gwl_Style,Save and (not(ws_Caption)) or ws_border);
+         bsDialog : SetWindowLong(Form.Handle,gwl_Style,Save and (not(ws_Caption)) or ds_modalframe or ws_dlgframe);
+      end;
+      Form.Height := Form.Height - getSystemMetrics(sm_cyCaption);
+      Form.Refresh;
+   end;
+end;
+
+
+
+procedure TForm1.FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+//폼 이동 처리
+begin
+   ReleaseCapture();
+   SendMessage(Handle,WM_SYSCOMMAND,$F012,0 );
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+var
+   I : Integer;
+begin
+   try
+      HideTitlebar(self);
+      if not ((ParamStr(1) = 'DEV') or (ParamStr(2)= 'DEV')) then
+      begin
+//         self.Width  := PnlMain.Width;
+//         self.Height := PnlMain.Height;
+      end;
+
+      Pnl_Ctrl.Left := PnlMain.Width - Pnl_Ctrl.Width - 8;
+      Pnl_Ctrl.Top := 0 + 5;
+      Pnl_Ctrl.Color := PnlMain.Color;
+      Pnl_Ctrl.BringToFront;
+
+      if UserCheck then
+      begin
+         Bmp_HEOPOONG := TBitmap.Create;
+         Bmp_HEOPOONG.Height := 7;
+         Bmp_HEOPOONG.Width := 7;
+//         ImageList_Detect.GetBitmap(0,Bmp_HEOPOONG);
+         ImageList_Detect2.GetBitmap(0,Bmp_HEOPOONG);
+
+         Image2.Picture := TPicture(Bmp_HEOPOONG);
+
+   {  //저장할떄 ㅋ
+         Bmp_ElveSub.LoadFromFile('E:\ImageS\zz\20180705_몰이_1\흑월2층_원본.bmp');
+         Bmp_ElveSub := TransColor_0(Bmp_ElveSub);
+         Image7.Picture := TPicture(Bmp_ElveSub);
+         Bmp_ElveSub.SaveToFile('E:\ImageS\zz\20180705_몰이_1\흑월2층_변환_2.bmp');
+   }
+         DateTimePicker1.Time := IncHour(IncMinute(now,3),1);
+      end;
+   except
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :FormCreate'+'---'); {$ENDIF}
+   end;
+end;
+
+procedure TForm1.Btn_StartEndClick(Sender: TObject);
+begin
+   try
+      case (Sender as TButton).Tag of
+         1:
+            begin
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Event ]'+'---------START ON!!!'); {$ENDIF}
+//   Timer1.Enabled := True;                  //_dev
+               Handle_1 := FindWindow(nil, PChar(Edit1.Text));
+               if not (Handle_1 > 0) then
+               begin
+                  Btn_StartEndClick(Btn_End);
+                  MessageDlg(''''+Edit1.Text+''' 없음',mtError, [mbOK], 0);
+                  Exit;
+               end;
+
+               Btn_Start.Enabled        := False;
+               Btn_End.Enabled          := True;
+               Chk_AutoOff.Enabled      := False;
+               DateTimePicker1.Enabled  := False;
+               Detect_Chk               := False;
+               foregroundFlag           := False;
+
+               Timer_Cap.Enabled               := True;      //캡쳐 타이머 0.25초
+               if Chk_AutoOff.Checked then
+                  Timer_PowerOff.Enabled       := True;      //자동꺼짐 타이머 1초
+//               if Chk_Elve.Checked then
+//               begin
+//                  Timer_BMoon_Elve.Enabled     := True;      //엘베 타이머
+//               end;
+
+   //            KeySetting;
+   //            KeybdHook;
+            end;
+
+         2:
+            begin
+               Btn_Start.Enabled          := True;
+               Btn_End.Enabled            := False;
+               Chk_AutoOff.Enabled        := True;
+               DateTimePicker1.Enabled    := True;
+
+               Timer_Cap.Enabled          := False;
+               Timer_PowerOff.Enabled     := False;
+               Timer_ActiveChk.Enabled     := False;
+               sndPlaySound(nil,0);
+   //            KeybdUnhook;
+            end;
+
+         8: Application.Minimize;
+         9: Close;
+      end;
+   except
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :Btn_StartEndClick'+'---'); {$ENDIF}
+   end;
+end;
+
+procedure TForm1.Edit1KeyPress(Sender: TObject; var Key: Char);
+begin
+   if Key = #13 then
+      Btn_StartEndClick(Btn_Start);
+end;
+
+function TForm1.ScreenCapture: Boolean;
+var
+   aDC: HDC;
+   aRect, bRect: TRect;
+   winplace: TWindowPlacement;
+begin
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+' ---------ScreenCapture!!!'); {$ENDIF}
+   Result := True;
+   try
+      if not (Handle_1 > 0) then
+      begin
+         Result := False;
+         Exit;
+      end;
+
+      FillChar(winplace, sizeof(winplace), 0);
+      winplace.length := sizeof(winplace);
+
+      GetWindowPlacement(Handle_1, @winplace);
+      case winplace.showCmd of
+         SW_HIDE, SW_SHOWMINIMIZED:
+            begin
+               Btn_StartEndClick(Btn_End);
+               MessageDlg('최소화하지마라ㅡㅡ', mtWarning, [mbOK], 0);
+               Result := False;
+               Exit;
+            end;
+      end;
+   except
+      Result := False;
+   end;
+
+   GetWindowRect(Handle_1, aRect);
+   bmp_1 := TBitmap.Create;
+//   bmp_1.Width := aRect.Width;
+//   bmp_1.Height := aRect.Height;
+   bmp_1.Width := 780;
+   bmp_1.Height := 630;
+
+   try
+      try
+         // Bitblt(btm.Canvas.Handle,캔버스시작X, 캔버스시작Y, 캡쳐이미지width, 캡쳐이미지height, aDC, 캡쳐이미지시작X, 캡쳐이미지시작Y, SRCCOPY);
+         aDC := GetDC(Handle_1); // 창 내부만    // aDC := GetWindowDC(aHandle);   //창 테두리 포함
+
+         Bitblt(bmp_1.Canvas.Handle,0,0,bmp_1.Width,bmp_1.Height,aDC,50,50,SRCCOPY); //BLACKNESS   WHITENESS
+
+         TransColor_2(bmp_1);
+         TransColor_2(Bmp_HEOPOONG);
+
+         image1.Picture := TPicture(bmp_1);
+//         image2.Picture := TPicture(Bmp_HEOPOONG);
+
+         if SearchBitmap(bmp_1,Bmp_HEOPOONG) then
+         begin
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Event] : 허풍뜸'); {$ENDIF}
+            Detect_Chk := True;
+//            sndPlaySound(ExtractFilePath(Application.EXEName)+'HP.wav',SND_NODEFAULT Or SND_ASYNC Or SND_LOOP);
+            if not sndPlaySound('F:\_Source\5.감지\Output\HP.wav',SND_NODEFAULT Or SND_ASYNC Or SND_LOOP) then
+               sndPlaySound('F:\_Source\5.감지\Output\HP.wav',SND_NODEFAULT Or SND_ASYNC Or SND_LOOP);
+            if not Timer_ActiveChk.Enabled then
+            begin
+               Timer_ActiveChk.Enabled := True;
+               if GetForegroundWindow = Handle_1 then
+                  foregroundFlag := True;
+            end;
+         end else
+         begin
+            if not Detect_Chk then
+            begin
+      {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Event] : 허풍안뜸'); {$ENDIF}
+               sndPlaySound(nil,0);
+               if Timer_ActiveChk.Enabled then
+                  Timer_ActiveChk.Enabled := False;
+            end;
+         end;
+
+         bmp_1.Destroy;
+      except
+         on E : Exception do begin
+            Result := False;
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :ScreenCapture(2)'+'--- '+E.Message); {$ENDIF}
+         end;
+      end;
+   finally
+      ReleaseDC(Handle_1, aDC);
+      // CloseHandle(aHandle);
+   end;
+end;
+
+procedure TForm1.Btn_HelpClick(Sender: TObject);
+//var
+//   a_Handle : THandle;
+//   Pt: TPoint;
+begin
+//   Timer_Cap.Enabled := True;
+
+
+   showmessage('테스트 중..'+#13#10+
+               '▶ 허풍이 채팅창에 겹칠 경우'+#13#10+
+               '▶ 허풍깜빡임때문에 감지 안 될 경우가 있을 수 있음'+#13#10+
+               '▶ 허풍이 어디 뜰지 몰라 화면 풀스캔하기에 CPU많이 먹음'+#13#10+
+               '- 다마@XX -');
+
+
+//   WindowFromPoint()
+{
+  Application.ProcessMessages;
+  // Get the point in the center of button 1
+  Pt.x := 100;
+  Pt.y := 100;
+  // Convert Pt to screen coordinates
+  Pt := ClientToScreen(Pt);
+
+  // Convert Pt to mickeys
+//  Pt.x := Ceil(Pt.x * 65535. / Screen.Width);
+//  Pt.y := Ceil(Pt.y * 65535. / Screen.Height);
+  // Move the mouse
+  mouse_event(MOUSEEVENTF_ABSOLUTE or MOUSEEVENTF_MOVE, Pt.x, Pt.y, 0, 0);
+  // Simulate the left mouse button down
+  mouse_event(MOUSEEVENTF_ABSOLUTE or MOUSEEVENTF_RIGHTDOWN, Pt.x, Pt.y, 0, 0);
+  // Simulate the left mouse button up
+  mouse_event(MOUSEEVENTF_ABSOLUTE or MOUSEEVENTF_RIGHTUP, Pt.x, Pt.y, 0, 0);
+}
+{   a_Handle := FindWindow(nil, PChar('다마살보'));
+//   PostMessage(a_Handle, WM_LBUTTONDOWN,0,MakeLParam(100,100));
+//   PostMessage(a_Handle, WM_LBUTTONUP,0,MakeLParam(100,100));
+//   PostMessage(a_Handle, WM_RBUTTONDOWN,0,(100 shl 15)+100);
+//   PostMessage(a_Handle, WM_RBUTTONUP,0,(100 shl 15)+100);
+   mouse_event(MOUSEEVENTF_RIGHTDOWN,100,100,);
+}
+end;
+
+
+function TForm1.SearchBitmap(bmMain,bmSub: TBitMap): Boolean;
+type
+   TIntArray = array [word] of Integer;
+   PIntArray = ^TIntArray;
+var
+   p0, p1, p2: PIntArray;
+   X, Y: Integer;
+   x1, y1, w, w0, w1, k: Integer;
+   b: Boolean;
+begin
+   try
+      Result := True;
+
+      bmMain.PixelFormat := pf32bit;
+      bmSub.PixelFormat := pf32bit;
+
+      w := bmMain.Width;
+      w0 := bmMain.Width * sizeof(Integer);
+      w1 := bmSub.Width * sizeof(Integer);
+
+      p0 := bmMain.ScanLine[0];
+      p1 := bmSub.ScanLine[0];
+
+      for Y := 0 to bmMain.Height - bmSub.Height do
+      begin
+         for X := 0 to bmMain.Width - bmSub.Width do
+         begin
+            b := True;
+            p2 := p1;
+            k := 0;
+            for y1 := 0 to bmSub.Height - 1 do
+            begin
+               for x1 := 0 to bmSub.Width - 1 do
+               begin
+                  if p0[k + X + x1] <> p2[x1] then
+                  begin
+                     b := false;
+                     break;
+                  end;
+               end;
+
+               if not b then
+                  break;
+               Integer(p2) := Integer(p2) - w1;
+               k := k - w;
+            end;
+
+            if b then
+            begin
+               Exit;
+            end;
+         end;
+
+         Integer(p0) := Integer(p0) - w0;
+      end;
+      Result := false;
+   except
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :SearchBitmap'+'---'); {$ENDIF}
+   end;
+end;
+
+procedure TForm1.Timer_ActiveChkTimer(Sender: TObject);
+begin
+
+   if (GetForegroundWindow = Handle_1) and (not foregroundFlag) then
+      sndPlaySound(nil,0);
+end;
+
+procedure TForm1.Timer_CapTimer(Sender: TObject);
+begin
+   try
+      Timer_Cap.Interval := 5000;
+//   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+' ---------Timer_Cap ON!!!'); {$ENDIF}
+      ScreenCapture;
+   except
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :Timer_CapTimer'+'---'); {$ENDIF}
+   end;
+end;
+
+procedure TForm1.Timer_PowerOffTimer(Sender: TObject);
+begin
+   try
+      if Chk_AutoOff.Checked then
+      begin
+         if FormatDateTime('HH:NN',DateTimePicker1.Time) = FormatDateTime('HH:NN',now) then
+         begin
+            Timer_PowerOff.Enabled := False;
+         end;
+      end;
+   except
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :Timer_PowerOffTimer'+'---'); {$ENDIF}
+   end;
+end;
+
+function TForm1.TransColor_0(TransBmp:TBitmap):TBitmap;
+//좌표
+var
+   Lx, Ly : Integer;
+   gray : Byte;   //--
+   c : TColor;
+begin
+   try
+      result := nil;
+     //_흑회백변환
+      for Lx:= 0 to TransBmp.Canvas.ClipRect.Right do
+      begin
+         for Ly:= 0 to TransBmp.Canvas.ClipRect.Bottom do
+         begin
+            c:= TransBmp.Canvas.Pixels[Lx,Ly];
+            gray:= (Byte(c) + Byte(c shr 8) + Byte(c shr 16)) div 3;
+            TransBmp.Canvas.Pixels[Lx,Ly]:= RGB(gray,gray,gray);
+
+            if TransBmp.Canvas.Pixels[ Lx, Ly ] > $000FFFFF then
+               TransBmp.Canvas.Pixels[ Lx, Ly ] := $00FFFFFF;
+         end;
+      end;
+      result := TransBmp;
+//      TransBmp := nil;
+      //Red:$000000FF Blue:$00FF0000 Green:$00008000 White:$00FFFFFF Black:$00000000 Yellow:$0000FFFF Gray:$00C0C0C0
+   except
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :TransColor_0'+'---'); {$ENDIF}
+   end;
+end;
+
+function TForm1.TransColor_1(TransBmp: TBitmap): Tbitmap;
+//맵
+var
+   Lx, Ly : Integer;
+   gray : Byte;   //--
+   c : TColor;
+begin
+   try
+      result := nil;
+      for Lx := 0 to TransBmp.Canvas.ClipRect.Right do begin
+         for Ly := 0 to TransBmp.Canvas.ClipRect.Bottom do begin
+   //         if TransBmp.Canvas.Pixels[ Lx, Ly ] <> clBlack then
+   //         if (TransBmp.Canvas.Pixels[ Lx, Ly ] > (($00FFFFFF - $00000000) div 2) ) then
+            if (TransBmp.Canvas.Pixels[ Lx, Ly ] > (  (  (  $00FFFFFF + ($00FFFFFF - $00000000) div 2)  ) div 2  )  ) then //회색과 흰색 사이
+               TransBmp.Canvas.Pixels[ Lx, Ly ] := $00FFFFFF
+            else
+               TransBmp.Canvas.Pixels[ Lx, Ly ] := $00000000;
+         end;
+      end;
+      result := TransBmp;
+   except
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :TransColor_1'+'---'); {$ENDIF}
+   end;
+end;
+
+function TForm1.TransColor_2(TransBmp: TBitmap): Tbitmap;
+//허풍
+var
+   Lx, Ly : Integer;
+   gray : Byte;   //--
+   c : TColor;
+begin
+   try
+      result := nil;
+     //_흑회백변환
+      for Lx:= 0 to TransBmp.Canvas.ClipRect.Right do
+      begin
+         for Ly:= 0 to TransBmp.Canvas.ClipRect.Bottom do
+         begin
+            c:= TransBmp.Canvas.Pixels[Lx,Ly];
+            gray:= (Byte(c) + Byte(c shr 8) + Byte(c shr 16)) div 3;
+            TransBmp.Canvas.Pixels[Lx,Ly]:= RGB(gray,gray,gray);
+
+//            if TransBmp.Canvas.Pixels[ Lx, Ly ] >= $00A4A7AB then
+            if TransBmp.Canvas.Pixels[ Lx, Ly ] >= $0084A7AB then
+               TransBmp.Canvas.Pixels[ Lx, Ly ] := $00FFFFFF
+            else
+               TransBmp.Canvas.Pixels[ Lx, Ly ] := $00000000
+         end;
+      end;
+      result := TransBmp;
+   except
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :TransColor_test'+'---'); {$ENDIF}
+   end;
+end;
+
+function TForm1.TransColor_test(TransBmp: TBitmap): Tbitmap;
+var
+   Lx, Ly : Integer;
+   gray : Byte;   //--
+   c : TColor;
+begin
+   try
+      result := nil;
+     //_흑회백변환
+      for Lx:= 0 to TransBmp.Canvas.ClipRect.Right do
+      begin
+         for Ly:= 0 to TransBmp.Canvas.ClipRect.Bottom do
+         begin
+//            c:= TransBmp.Canvas.Pixels[Lx,Ly];
+//            gray:= (Byte(c) + Byte(c shr 8) + Byte(c shr 16)) div 3;
+//            TransBmp.Canvas.Pixels[Lx,Ly]:= RGB(gray,gray,gray);
+
+//            if TransBmp.Canvas.Pixels[ Lx, Ly ] <> $00000000 then
+            if (TransBmp.Canvas.Pixels[ Lx, Ly ] >= $00626B78) and (TransBmp.Canvas.Pixels[ Lx, Ly ] <= $00B2B5B9) then
+               TransBmp.Canvas.Pixels[ Lx, Ly ] := $00FFFFFF
+            else
+               TransBmp.Canvas.Pixels[ Lx, Ly ] := $00000000;
+
+
+         end;
+      end;
+      result := TransBmp;
+   except
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :TransColor_test'+'---'); {$ENDIF}
+   end;
+end;
+
+end.
