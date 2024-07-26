@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899-12-30 00:00:00.000.057,=C:\Users\c\Documents\RAD Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.451,C:\Users\c\Documents\RAD Studio\Projects\Unit1.pas=E:\_Source\_2019\00.1분간클릭\Unit1.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.451,C:\Users\c\Documents\RAD Studio\Projects\Unit1.dfm=E:\_Source\_2019\00.1분간클릭\Unit1.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.576,C:\Users\c\Documents\RAD Studio\Projects\Project1.dproj=E:\_Source\_2019\00.1분간클릭\Project1.dproj</Transaction>
+    <Transaction>2020-11-30 23:55:09.658,E:\_Source\_2019\00.1분간클릭\클릭해.dproj=E:\_Source\_2019\00.1분간클릭\Project1.dproj</Transaction>
+  </Transactions>
+</BorlandProject>

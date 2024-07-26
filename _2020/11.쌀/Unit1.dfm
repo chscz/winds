@@ -1,0 +1,313 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  BorderStyle = bsSingle
+  Caption = #55136#46104#45208'1'
+  ClientHeight = 511
+  ClientWidth = 349
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnMouseMove = FormMouseMove
+  PixelsPerInch = 96
+  TextHeight = 13
+  object pnl_Lock: TPanel
+    Left = 183
+    Top = 35
+    Width = 137
+    Height = 113
+    ParentBackground = False
+    TabOrder = 0
+    Visible = False
+    OnMouseMove = FormMouseMove
+    object edt_Lock: TEdit
+      Left = 20
+      Top = 15
+      Width = 95
+      Height = 21
+      PasswordChar = '*'
+      TabOrder = 0
+      OnKeyPress = edt_LockKeyPress
+    end
+    object Btn_Lock: TButton
+      Left = 32
+      Top = 48
+      Width = 75
+      Height = 25
+      Caption = 'OK'
+      TabOrder = 1
+      OnClick = Btn_LockClick
+    end
+  end
+  object PnlMain: TPanel
+    Left = 0
+    Top = 0
+    Width = 177
+    Height = 148
+    Color = 16245500
+    ParentBackground = False
+    TabOrder = 1
+    OnMouseMove = FormMouseMove
+    object LLblMain: TLabel
+      Left = 7
+      Top = 7
+      Width = 72
+      Height = 17
+      Caption = #48335#51674#54056#51088
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clMenuHighlight
+      Font.Height = -17
+      Font.Name = 'HY'#50685#49436'M'
+      Font.Style = [fsBold]
+      ParentFont = False
+      OnMouseMove = FormMouseMove
+    end
+    object Label3: TLabel
+      Left = 8
+      Top = 67
+      Width = 62
+      Height = 13
+      Caption = #44732#51664#50696#50557':'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'HY'#50685#49436'M'
+      Font.Style = [fsBold]
+      ParentFont = False
+      OnMouseMove = FormMouseMove
+    end
+    object Lbl_DateCheck: TLabel
+      Left = 81
+      Top = 8
+      Width = 37
+      Height = 13
+      Caption = '(D-100)'
+      OnMouseMove = FormMouseMove
+    end
+    object Label1: TLabel
+      Left = 10
+      Top = 35
+      Width = 33
+      Height = 19
+      Caption = 'XXX'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object Label2: TLabel
+      Left = 50
+      Top = 35
+      Width = 33
+      Height = 19
+      Caption = 'YYY'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object Label4: TLabel
+      Left = 99
+      Top = 35
+      Width = 42
+      Height = 19
+      Caption = 'FLAG'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object Btn_Start: TButton
+      Tag = 1
+      Left = 20
+      Top = 96
+      Width = 60
+      Height = 40
+      Caption = 'ON(F9)'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 0
+      OnClick = Btn_StartEndClick
+      OnMouseMove = FormMouseMove
+    end
+    object Btn_End: TButton
+      Tag = 2
+      Left = 89
+      Top = 96
+      Width = 60
+      Height = 40
+      Caption = 'OFF(F10)'
+      Enabled = False
+      TabOrder = 1
+      OnClick = Btn_StartEndClick
+      OnMouseMove = FormMouseMove
+    end
+    object DateTimePicker1: TDateTimePicker
+      Left = 72
+      Top = 65
+      Width = 50
+      Height = 21
+      Date = 43286.854969062500000000
+      Format = 'HH:mm'
+      Time = 43286.854969062500000000
+      DateMode = dmUpDown
+      Kind = dtkTime
+      TabOrder = 2
+    end
+    object Chk_AutoOff: TCheckBox
+      Tag = 2
+      Left = 128
+      Top = 67
+      Width = 40
+      Height = 17
+      Caption = #49324#50857
+      Checked = True
+      State = cbChecked
+      TabOrder = 3
+      OnMouseMove = FormMouseMove
+    end
+    object Edit1: TEdit
+      Left = 0
+      Top = 82
+      Width = 25
+      Height = 21
+      NumbersOnly = True
+      TabOrder = 4
+      Text = '1'
+    end
+  end
+  object Pnl_Ctrl: TPanel
+    Left = 121
+    Top = 4
+    Width = 45
+    Height = 20
+    Color = 16245500
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentBackground = False
+    ParentFont = False
+    TabOrder = 2
+    OnMouseMove = FormMouseMove
+    object Btn_Minimize: TButton
+      Tag = 8
+      Left = 0
+      Top = 0
+      Width = 20
+      Height = 20
+      Caption = #65293
+      TabOrder = 0
+      OnClick = Btn_StartEndClick
+    end
+    object Btn_Close: TButton
+      Tag = 9
+      Left = 25
+      Top = 0
+      Width = 20
+      Height = 20
+      Caption = #215
+      TabOrder = 1
+      OnClick = Btn_StartEndClick
+    end
+  end
+  object Memo1: TMemo
+    Left = 10
+    Top = 224
+    Width = 331
+    Height = 279
+    ReadOnly = True
+    ScrollBars = ssVertical
+    TabOrder = 3
+  end
+  object Timer_BMoon_Move: TTimer
+    Enabled = False
+    Interval = 100
+    OnTimer = Timer_BMoon_MoveTimer
+    Left = 54
+    Top = 168
+  end
+  object ImageList_XY: TImageList
+    Height = 3
+    Width = 6
+    Left = 192
+    Top = 168
+    Bitmap = {
+      494C01010A005800740106000300FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      0000000000003600000028000000180000000900000001002000000000006003
+      000000000000000000000000000000000000FFFFFF00FFFFFF00000000000000
+      0000FFFFFF00FFFFFF0000000000FFFFFF00FFFFFF00FFFFFF0000000000FFFF
+      FF00000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0000000000FFFFFF000000000000000000FFFFFF00FFFFFF000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000000000000000000000FFFFFF0000000000FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF0000000000FFFFFF00FFFFFF00FFFFFF00FFFFFF000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000000000000000000000FFFFFF00FFFFFF00000000000000
+      0000FFFFFF00FFFFFF0000000000FFFFFF00FFFFFF00FFFFFF00FFFFFF000000
+      0000FFFFFF00FFFFFF000000000000000000FFFFFF00FFFFFF00FFFFFF000000
+      0000FFFFFF00FFFFFF0000000000FFFFFF0000000000FFFFFF00FFFFFF000000
+      0000FFFFFF00FFFFFF0000000000FFFFFF00FFFFFF0000000000000000000000
+      000000000000FFFFFF00FFFFFF00FFFFFF00FFFFFF0000000000FFFFFF00FFFF
+      FF0000000000FFFFFF00FFFFFF0000000000FFFFFF0000000000FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF0000000000FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF0000000000FFFFFF00FFFFFF000000000000000000FFFFFF00000000000000
+      00000000000000000000FFFFFF00FFFFFF00FFFFFF0000000000FFFFFF00FFFF
+      FF0000000000FFFFFF000000000000000000FFFFFF00FFFFFF0000000000FFFF
+      FF0000000000FFFFFF00FFFFFF00000000000000000000000000FFFFFF000000
+      0000FFFFFF00FFFFFF00FFFFFF000000000000000000FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF0000000000FFFFFF00FFFFFF00FFFFFF00FFFFFF0000000000FFFF
+      FF00FFFFFF0000000000FFFFFF00FFFFFF0000000000FFFFFF0000000000FFFF
+      FF00FFFFFF00FFFFFF0000000000FFFFFF00FFFFFF00FFFFFF00000000000000
+      0000FFFFFF00FFFFFF0000000000FFFFFF00FFFFFF00FFFFFF0000000000FFFF
+      FF00FFFFFF00FFFFFF0000000000FFFFFF00FFFFFF0000000000FFFFFF000000
+      0000FFFFFF00FFFFFF0000000000FFFFFF00424D3E000000000000003E000000
+      2800000018000000090000000100010000000000240000000000000000000000
+      000000000000000000000000FFFFFF0000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000}
+  end
+  object Timer_Cap: TTimer
+    Enabled = False
+    Interval = 250
+    OnTimer = Timer_CapTimer
+    Left = 82
+    Top = 168
+  end
+  object Timer_PowerOff: TTimer
+    Interval = 15000
+    OnTimer = Timer_PowerOffTimer
+    Top = 168
+  end
+  object Timer_BMoon_Skill: TTimer
+    Enabled = False
+    OnTimer = Timer_BMoon_SkillTimer
+    Left = 110
+    Top = 168
+  end
+  object Timer_BMoon_PosChk: TTimer
+    Enabled = False
+    Interval = 10000
+    OnTimer = Timer_BMoon_PosChkTimer
+    Left = 248
+    Top = 168
+  end
+end

@@ -1,0 +1,225 @@
+unit ImageSearch;
+
+interface
+
+uses
+   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics
+   , Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
+  Vcl.ExtCtrls,
+  System.Generics.Collections;
+
+type
+  TSubImageInfo = record
+    X: integer;
+    Y: integer;
+    Color: integer;
+  end;
+
+implementation
+{$R *.dfm}
+
+function ImageSearch(const ASubimageFile: string): TRect;
+var
+  X, Y, K, _Color: integer;
+  _SubImageInfo: TSubImageInfo;
+  _SubImageInfoList: TList<TSubImageInfo>;
+  _SmallWidth, _SmallHeight, _BigWidth, _BigHeight: integer;
+  _MatchingPixels: integer;
+  _LTColor, _RTColor, _LBColor, _RBColor: integer;
+  _FirstPixels: TList<TSubImageInfo>;
+  _Offset: TPoint;
+  _Desktop: HDC;
+  _ScreenBitmap: TBitmap;
+  _SubimageBitmap: TPNGImage;
+  _Pos: TPoint;
+begin
+  Result.Left := -1;
+  Result.Top := Result.Left;
+  Result.Height := Result.Left;
+  Result.Width := Result.Left;
+
+  if not FileExists(ASubimageFile) then
+    Exit;
+
+  _SubImageInfoList := TList<TSubImageInfo>.Create;
+  _ScreenBitmap := TBitmap.Create;
+  _SubimageBitmap := TPNGImage.Create;
+  _FirstPixels := TList<TSubImageInfo>.Create;
+  try
+    _SubimageBitmap.LoadFromFile(ASubimageFile);
+
+    if (_SubimageBitmap.Height < 3) or (_SubimageBitmap.Width < 3) then
+      Exit; // Image is too small
+
+    X := 0;
+    Y := _SubimageBitmap.Height div 2;
+    while X < _SubimageBitmap.Width - 1 do
+    begin
+      _SubImageInfo.X := X;
+      _SubImageInfo.Y := Y;
+      _Color := _SubimageBitmap.Canvas.Pixels[X, Y];
+      _SubImageInfo.Color := _Color;
+      _SubImageInfoList.Add(_SubImageInfo);
+      X := X + 3;
+    end;
+
+    Y := 0;
+    X := _SubimageBitmap.Width div 2;
+    while Y < _SubimageBitmap.Height - 1 do
+    begin
+      _SubImageInfo.X := X;
+      _SubImageInfo.Y := Y;
+      _Color := _SubimageBitmap.Canvas.Pixels[X, Y];
+      _SubImageInfo.Color := _Color;
+      _SubImageInfoList.Add(_SubImageInfo);
+      Y := Y + 3;
+    end;
+
+    X := 0;
+    Y := _SubimageBitmap.Height div 4;
+    while X < _SubimageBitmap.Width - 1 do
+    begin
+      _SubImageInfo.X := X;
+      _SubImageInfo.Y := Y;
+      _Color := _SubimageBitmap.Canvas.Pixels[X, Y];
+      _SubImageInfo.Color := _Color;
+      _SubImageInfoList.Add(_SubImageInfo);
+      X := X + 3;
+    end;
+
+    Y := 0;
+    X := _SubimageBitmap.Width div 4;
+    while Y < _SubimageBitmap.Height - 1 do
+    begin
+      _SubImageInfo.X := X;
+      _SubImageInfo.Y := Y;
+      _Color := _SubimageBitmap.Canvas.Pixels[X, Y];
+      _SubImageInfo.Color := _Color;
+      _SubImageInfoList.Add(_SubImageInfo);
+      Y := Y + 3;
+    end;
+
+    X := 0;
+    Y := (_SubimageBitmap.Height div 4) + (_SubimageBitmap.Height div 2);
+    while X < _SubimageBitmap.Width - 1 do
+    begin
+      _SubImageInfo.X := X;
+      _SubImageInfo.Y := Y;
+      _Color := _SubimageBitmap.Canvas.Pixels[X, Y];
+      _SubImageInfo.Color := _Color;
+      _SubImageInfoList.Add(_SubImageInfo);
+      X := X + 3;
+    end;
+
+    Y := 0;
+    X := (_SubimageBitmap.Width div 4) + (_SubimageBitmap.Width div 2);
+    while Y < _SubimageBitmap.Height - 1 do
+    begin
+      _SubImageInfo.X := X;
+      _SubImageInfo.Y := Y;
+      _Color := _SubimageBitmap.Canvas.Pixels[X, Y];
+      _SubImageInfo.Color := _Color;
+      _SubImageInfoList.Add(_SubImageInfo);
+      Y := Y + 3;
+    end;
+
+    _Desktop := GetDC(0);
+    _ScreenBitmap.PixelFormat := pf32bit;
+    _ScreenBitmap.Width := Screen.Width;
+    _ScreenBitmap.Height := Screen.Height;
+    BitBlt(_ScreenBitmap.Canvas.Handle, 0, 0, _ScreenBitmap.Width,
+      _ScreenBitmap.Height, _Desktop, 0, 0, SRCCOPY);
+    _MatchingPixels := 0;
+    _SmallWidth := _SubimageBitmap.Width - 1;
+    _SmallHeight := _SubimageBitmap.Height - 1;
+    _BigWidth := _ScreenBitmap.Width;
+    _BigHeight := _ScreenBitmap.Height;
+
+    _LTColor := _SubimageBitmap.Canvas.Pixels[0, 0];
+    _RTColor := _SubimageBitmap.Canvas.Pixels[_SmallWidth, 0];
+    _LBColor := _SubimageBitmap.Canvas.Pixels[0, _SmallHeight];
+    _RBColor := _SubimageBitmap.Canvas.Pixels[_SmallWidth, _SmallHeight];
+
+    for X := 1 to 3 do
+    begin
+      for Y := 1 to 3 do
+      begin
+        _SubImageInfo.X := X;
+        _SubImageInfo.Y := Y;
+        _SubImageInfo.Color := _SubimageBitmap.Canvas.Pixels[X, Y];
+        _FirstPixels.Add(_SubImageInfo);
+      end;
+    end;
+
+    X := 0;
+    while X < _BigWidth - _SmallWidth do
+    begin
+      Y := 0;
+      while Y < _BigHeight - _SmallHeight do
+      begin
+        _Color := _ScreenBitmap.Canvas.Pixels[X, Y];
+        _Offset.X := 0;
+        _Offset.Y := 0;
+        for K := 0 to _FirstPixels.Count - 1 do
+        begin
+          if (_Color = _FirstPixels[K].Color) then
+          begin
+            _Offset.X := _FirstPixels[K].X;
+            _Offset.Y := _FirstPixels[K].Y;
+            Break;
+          end;
+        end;
+
+        // Check if all corners matches of smaller image
+        if ((_Offset.X <> 0) or (_Color = _LTColor)) and
+          (_ScreenBitmap.Canvas.Pixels[X + _SmallWidth, Y] = _RTColor) and
+          (_ScreenBitmap.Canvas.Pixels[X, Y + _SmallHeight] = _LBColor) and
+          (_ScreenBitmap.Canvas.Pixels[X + _SmallWidth, Y + _SmallHeight]
+          = _RBColor) then
+        begin
+          // Checking if content matches
+          for K := 0 to _SubImageInfoList.Count - 1 do
+          begin
+            _Pos.X := X - _Offset.X + _SubImageInfoList[K].X;
+            _Pos.Y := Y - _Offset.Y + _SubImageInfoList[K].Y;
+            if (_ScreenBitmap.Canvas.Pixels[_Pos.X, _Pos.Y] = _SubImageInfoList
+              [K].Color) then
+              _MatchingPixels := _MatchingPixels + 1
+            else
+            begin
+              _Pos.X := X - _Offset.X - 1 + _SubImageInfoList[K].X;
+              _Pos.Y := Y - _Offset.Y + 1 + _SubImageInfoList[K].Y;
+              if (_ScreenBitmap.Canvas.Pixels[_Pos.X, _Pos.Y]
+                = _SubImageInfoList[K].Color) then
+                _MatchingPixels := _MatchingPixels + 1
+              else
+              begin
+                _MatchingPixels := 0;
+                Break;
+              end;
+            end;
+          end;
+          if (_MatchingPixels - 1 = _SubImageInfoList.Count - 1) then
+          begin
+            Result.Left := X - _Offset.X;
+            Result.Top := Y - _Offset.Y;
+
+            Result.Width := _SubimageBitmap.Width;
+            Result.Height := _SubimageBitmap.Height;
+            Exit;
+          end;
+        end;
+        Y := Y + 3;
+      end;
+      X := X + 3;
+    end;
+
+  finally
+    FreeAndNil(_FirstPixels);
+    FreeAndNil(_ScreenBitmap);
+    FreeAndNil(_SubimageBitmap);
+    FreeAndNil(_SubImageInfoList);
+  end;
+end;
+
+end.

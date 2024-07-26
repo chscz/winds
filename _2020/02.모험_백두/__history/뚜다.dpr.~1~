@@ -1,0 +1,14 @@
+program Ctrl;
+
+uses
+  Vcl.Forms,
+  Unit1 in 'Unit1.pas' {Ctrl1};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TCtrl1, Ctrl1);
+  Application.Run;
+end.

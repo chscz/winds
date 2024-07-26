@@ -1,0 +1,349 @@
+unit Unit1;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls, Vcl.ImgList
+  , System.Win.Registry, Contnrs, Vcl.ComCtrls, Dateutils;
+
+type
+  TForm1 = class(TForm)
+    PnlMain: TPanel;
+    LLblMain: TLabel;
+    Label3: TLabel;
+    Lbl_DateCheck: TLabel;
+    Label1: TLabel;
+    Label2: TLabel;
+    Label4: TLabel;
+    Btn_Start: TButton;
+    Btn_End: TButton;
+    DateTimePicker1: TDateTimePicker;
+    Chk_AutoOff: TCheckBox;
+    Edit1: TEdit;
+    Timer_PowerOff: TTimer;
+    Timer_BMoon_Move: TTimer;
+    Timer_Cap: TTimer;
+    Timer_BMoon_Skill: TTimer;
+    Timer_BMoon_PosChk: TTimer;
+    pnl_Lock: TPanel;
+    edt_Lock: TEdit;
+    Btn_Lock: TButton;
+    Pnl_Ctrl: TPanel;
+    Btn_Minimize: TButton;
+    Btn_Close: TButton;
+    procedure FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure Btn_StartEndClick(Sender: TObject);
+    procedure Btn_LockClick(Sender: TObject);
+    procedure HideTitlebar(Form:TForm);
+    function UserCheck: Boolean;
+    procedure FormCreate(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+    bmp_0,bmp_1,bmp_2,bmp_3,bmp_4,bmp_5,bmp_6,bmp_7,bmp_8,bmp_9 : TBitmap;
+    Pos_X_Bak, Pos_Y_Bak  : Integer;         //좌표
+    MoveFlag      : Integer;
+  end;
+
+var
+  Form1: TForm1;
+  HookID: HHOOK;
+
+implementation
+
+{$R *.dfm}
+type
+   PKeyHookStruct = ^TKeyHookStruct;
+
+   TKeyHookStruct = record
+      vkCode: Integer;
+      ScanCode: Integer;
+      Flags: Integer;
+      Time: Integer;
+      dwExtraInfo: Integer;
+   end;
+   // 키 입력 필터링 함수
+
+function LLKeyHookFunc(HookCode: Integer; KeyCode: wParam; kStrokeInfo: lParam)
+  : LResult; stdcall;
+var
+   PKeyHook: PKeyHookStruct;
+   idlestate: Boolean;
+   NHandle: THandle;
+   KeyFlag: Boolean;
+   Len: LongInt;
+   Title: String;
+   TitleTxt: String;
+begin
+   KeyFlag := False;
+   // 키 정보 받아오기
+   PKeyHook := Ptr(kStrokeInfo);
+   if HookCode >= 0 then
+   begin
+      if (PKeyHook.vkCode = VK_F9) then
+      begin
+         Form1.Btn_StartEndClick(Form1.Btn_Start);
+         Result := 1;
+      end
+      else if (PKeyHook.vkCode = VK_F10) then
+      begin
+         Form1.Btn_StartEndClick(Form1.Btn_End);
+         Result := 1;
+      end
+      else
+         // 필터링 된 키가 아니라면 계속 진행
+         Result := CallNextHookEx(HookID, HookCode, KeyCode, kStrokeInfo);
+//      idlestate := True;
+   end;
+end;
+
+procedure KeybdHook;
+const
+   WH_KEYBOARD_LL = 13;
+begin
+   HookID := SetWindowsHookEx(WH_KEYBOARD_LL, @LLKeyHookFunc, hInstance, 0);
+end;
+
+procedure KeybdUnhook;
+begin
+   UnHookWindowsHookEx(HookID);
+end;
+
+procedure TForm1.Btn_LockClick(Sender: TObject);
+//잠금
+var
+   Key_a        : String;
+   LockKey      : Integer;
+   Reg_2        : TRegistry;
+begin
+{
+   Key_a := FormatDateTime('MMDD',Now) + FormatDateTime('YY',Now);
+   Key_b := FormatDateTime('MMDD',Now);
+   LockKey := ((StrToInt(Key_a)-StrToInt(Key_b))*922);
+   LockKey := StrToInt(Copy(IntToStr(LockKey),1,6));
+   LockKey := LockKey*922;
+   LockKey := StrToInt(Copy(IntToStr(LockKey),1,6));
+}
+   Key_a := FormatDateTime('HHDDMM',Now);
+   LockKey := ((StrToInt(Key_a)*922)*11);
+   LockKey := StrToInt(Copy(IntToStr(LockKey),1,6));
+
+   if IntToStr(LockKey) = edt_Lock.Text then
+   begin
+      try
+         Reg_2 := TRegistry.Create;
+         Reg_2.RootKey := HKEY_CURRENT_USER;
+         Reg_2.OpenKey('\Software\MicroSoft\Windows Network', True);
+         Reg_2.WriteString('Release Lock_11',DateToStr(now));
+      finally
+         Reg_2.CloseKey;
+         Reg_2.Free;
+      end;
+//      Lbl_DateCheck.Caption := '(D-100)';
+      Lbl_DateCheck.Caption := '(무기한)';
+      Lbl_DateCheck.Left := Pnl_Ctrl.Left - Lbl_DateCheck.Width - 2;
+      pnl_Lock.Visible := False;
+      PnlMain.Enabled := True;
+//      Btn_StartEndClick(Btn_Start);
+   end else begin
+      MessageDlg('키 불일치',mtError,[mbOK],0);
+   end;
+end;
+
+//폼 컨트롤 - 타이틀 숨기기
+procedure TForm1.HideTitlebar(Form:TForm);
+var
+   Save : LongInt;
+begin
+   if Form.BorderStyle=bsNone then Exit;
+   Save:=GetWindowLong(Form.Handle,gwl_Style);
+   if (Save and ws_Caption)=ws_Caption then
+   begin
+      case Form.BorderStyle of
+         bsSingle,bsSizeable : SetWindowLong(Form.Handle,gwl_Style,Save and (not(ws_Caption)) or ws_border);
+         bsDialog : SetWindowLong(Form.Handle,gwl_Style,Save and (not(ws_Caption)) or ds_modalframe or ws_dlgframe);
+      end;
+      Form.Height := Form.Height - getSystemMetrics(sm_cyCaption);
+      Form.Refresh;
+   end;
+end;
+
+//유저체크
+function TForm1.UserCheck: Boolean;
+var
+   Reg_1 : TRegistry;
+begin
+   result := False;
+   try
+      Reg_1 := TRegistry.Create;
+      Reg_1.RootKey := HKEY_CURRENT_USER;
+      Reg_1.OpenKey('\Software\MicroSoft\Windows Network', True);
+      if not Reg_1.ValueExists('Release Lock_11') then
+      begin
+         pnl_Lock.Height   := Self.Height;
+         pnl_Lock.Width    := Self.Width;
+         pnl_Lock.Top      := 25;
+         pnl_Lock.Left     := 0;
+         pnl_Lock.Color    := PnlMain.Color;
+         edt_Lock.Left     := (pnl_Lock.Width - edt_Lock.Width) div 2;
+         edt_Lock.Top      := pnl_Lock.Height div 4;
+         Btn_Lock.Top      := edt_Lock.Top + edt_Lock.Height*2;
+         Btn_Lock.Left     := (pnl_Lock.Width - Btn_Lock.Width) div 2;
+         Lbl_DateCheck.Caption := '';
+
+         PnlMain.Enabled := False;
+         pnl_Lock.BringToFront;
+         pnl_Lock.Visible := True;
+      end else
+{
+      if (DaysBetween(now, StrToDate(Reg_1.ReadString('Release Lock_3'))) > 100) then
+      begin
+         pnl_Lock.Height := Self.Height;
+         pnl_Lock.Width := Self.Width;
+         pnl_Lock.Top := 25;
+         pnl_Lock.Left := 0;
+         pnl_Lock.Color := PnlMain.Color;
+         edt_Lock.Left := (pnl_Lock.Width - edt_Lock.Width) div 2;
+         edt_Lock.Top := pnl_Lock.Height div 4;
+         Btn_Lock.Top := edt_Lock.Top + edt_Lock.Height*2;
+         Btn_Lock.Left := (pnl_Lock.Width - Btn_Lock.Width) div 2;
+         Lbl_DateCheck.Caption := '';
+
+         PnlMain.Enabled := False;
+         pnl_Lock.BringToFront;
+         pnl_Lock.Visible := True;
+      end else
+}  //기간제시 주석해제
+      begin
+//         Lbl_DateCheck.Caption := '(D-'+IntToStr(100 - DaysBetween(now, StrToDate(Reg_1.ReadString('Release Lock_3'))))+')';
+         Lbl_DateCheck.Caption := '(무기한)';
+         Lbl_DateCheck.Left := Pnl_Ctrl.Left - Lbl_DateCheck.Width - 2;
+         result := True;
+      end;
+   finally
+      Reg_1.CloseKey;
+      Reg_1.Free;
+   end;
+end;
+
+procedure TForm1.FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+//폼 이동 처리
+begin
+   ReleaseCapture();
+   SendMessage(Handle,WM_SYSCOMMAND,$F012,0 );
+end;
+
+procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+   KeybdUnHook;
+end;
+
+
+procedure TForm1.FormCreate(Sender: TObject);
+var
+   I : Integer;
+begin
+   try
+      HideTitlebar(self);
+      if not ((LowerCase(ParamStr(1)) = LowerCase('DEV')) or (LowerCase(ParamStr(2)) = LowerCase('DEV'))) then
+      begin
+         self.Width  := PnlMain.Width;
+         self.Height := PnlMain.Height;
+      end;
+
+      Pnl_Ctrl.Left   := PnlMain.Width - Pnl_Ctrl.Width - 8;
+      Pnl_Ctrl.Top    := 0 + 5;
+      Pnl_Ctrl.Color  := PnlMain.Color;
+      Pnl_Ctrl.BringToFront;
+
+      if UserCheck then
+      begin
+         bmp_0 := TBitmap.Create;
+         bmp_1 := TBitmap.Create;
+         bmp_2 := TBitmap.Create;
+         bmp_3 := TBitmap.Create;
+         bmp_4 := TBitmap.Create;
+         bmp_5 := TBitmap.Create;
+         bmp_6 := TBitmap.Create;
+         bmp_7 := TBitmap.Create;
+         bmp_8 := TBitmap.Create;
+         bmp_9 := TBitmap.Create;
+         ImageList_XY.GetBitmap(0,bmp_0);
+         ImageList_XY.GetBitmap(1,bmp_1);
+         ImageList_XY.GetBitmap(2,bmp_2);
+         ImageList_XY.GetBitmap(3,bmp_3);
+         ImageList_XY.GetBitmap(4,bmp_4);
+         ImageList_XY.GetBitmap(5,bmp_5);
+         ImageList_XY.GetBitmap(6,bmp_6);
+         ImageList_XY.GetBitmap(7,bmp_7);
+         ImageList_XY.GetBitmap(8,bmp_8);
+         ImageList_XY.GetBitmap(9,bmp_9);
+         //----------------
+
+   {  //저장할떄 ㅋ
+         Bmp_ElveSub.LoadFromFile('E:\ImageS\zz\20180705_몰이_1\흑월2층_원본.bmp');
+         Bmp_ElveSub := TransColor_0(Bmp_ElveSub);
+         Image7.Picture := TPicture(Bmp_ElveSub);
+         Bmp_ElveSub.SaveToFile('E:\ImageS\zz\20180705_몰이_1\흑월2층_변환_2.bmp');
+   }
+         DateTimePicker1.Time := IncHour(IncMinute(now,3),2);
+
+         KeybdHook;
+      end;
+   except
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :FormCreate'+'---'); {$ENDIF}
+   end;
+end;
+
+procedure TForm1.Btn_StartEndClick(Sender: TObject);
+begin
+   try
+      case (Sender as TButton).Tag of
+         1:
+            begin
+               Self.Caption             := '볏짚패자';
+               Btn_Start.Enabled        := False;
+               Btn_End.Enabled          := True;
+               Chk_AutoOff.Enabled      := False;
+               DateTimePicker1.Enabled  := False;
+               Pos_X_Bak                := -1;
+               Pos_Y_Bak                := -1;
+               MoveFlag                 := 0;   // 0:채집무빙  1:등산무빙   2:탈출무빙
+
+               Timer_Cap.Enabled               := True;      //캡쳐 타이머 0.25초
+               if Chk_AutoOff.Checked then
+                  Timer_PowerOff.Enabled       := True;      //자동꺼짐 타이머 1초
+
+               Timer_BMoon_Move.Enabled  := True;      //무빙 타이머
+
+               Timer_BMoon_Skill.Interval := StrToInt(Edit1.Text)*1000;
+
+               Timer_BMoon_Skill.Enabled := True;      //스킬 타이머
+               Timer_BMoon_PosChk.Enabled := True;
+            end;
+
+         2:
+            begin
+               Btn_Start.Enabled          := True;
+               Btn_End.Enabled            := False;
+               Chk_AutoOff.Enabled        := True;
+               DateTimePicker1.Enabled    := True;
+               Timer_Cap.Enabled          := False;
+               Timer_BMoon_Move.Enabled   := False;
+               Timer_BMoon_Skill.Enabled  := False;
+               Timer_PowerOff.Enabled     := False;
+               Timer_BMoon_PosChk.Enabled := False;
+            end;
+
+         8: Application.Minimize;
+         9: Close;
+      end;
+   except
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :Btn_StartEndClick'+'---'); {$ENDIF}
+   end;
+end;
+
+end.

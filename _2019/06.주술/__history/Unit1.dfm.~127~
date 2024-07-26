@@ -1,0 +1,323 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu, biMinimize]
+  BorderStyle = bsSingle
+  Caption = #46168#44592
+  ClientHeight = 241
+  ClientWidth = 392
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnMouseMove = FormMouseMove
+  PixelsPerInch = 96
+  TextHeight = 13
+  object PnlMain: TPanel
+    Left = 0
+    Top = 0
+    Width = 145
+    Height = 113
+    Color = 10154973
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentBackground = False
+    ParentFont = False
+    TabOrder = 0
+    OnMouseMove = FormMouseMove
+    object LLblMain: TLabel
+      Left = 3
+      Top = 4
+      Width = 46
+      Height = 17
+      Caption = '*'#46168#44592
+      Color = 16572323
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clRed
+      Font.Height = -17
+      Font.Name = 'HY'#50685#49436'M'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      OnMouseMove = FormMouseMove
+    end
+    object Img_ID1: TImage
+      Left = 52
+      Top = 5
+      Width = 40
+      Height = 17
+      OnMouseMove = FormMouseMove
+    end
+    object Btn_Start: TButton
+      Tag = 1
+      Left = 6
+      Top = 79
+      Width = 45
+      Height = 30
+      Caption = 'ON'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 2
+      OnClick = Btn_StartEndClick
+      OnMouseMove = FormMouseMove
+    end
+    object Btn_End: TButton
+      Tag = 2
+      Left = 52
+      Top = 79
+      Width = 45
+      Height = 30
+      Caption = 'OFF'
+      Enabled = False
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 0
+      OnClick = Btn_StartEndClick
+      OnMouseMove = FormMouseMove
+    end
+    object Btn_SignUp: TButton
+      Tag = 5
+      Left = 104
+      Top = 29
+      Width = 35
+      Height = 23
+      Caption = #46321#47197
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 1
+      OnClick = Btn_WinTilte_Setting
+      OnMouseMove = FormMouseMove
+    end
+    object Btn_Help: TButton
+      Left = 99
+      Top = 79
+      Width = 40
+      Height = 30
+      Caption = #46020#50880#47568
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 3
+      OnClick = Btn_HelpClick
+      OnMouseMove = FormMouseMove
+    end
+    object Btn_Reset: TButton
+      Tag = 6
+      Left = 104
+      Top = 50
+      Width = 35
+      Height = 23
+      Caption = #47532#49483
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 4
+      OnClick = Btn_WinTilte_Setting
+      OnMouseMove = FormMouseMove
+    end
+    object Cbx_SkillType: TComboBox
+      Left = 8
+      Top = 30
+      Width = 89
+      Height = 22
+      Style = csOwnerDrawFixed
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ItemIndex = 1
+      ParentFont = False
+      TabOrder = 5
+      Text = #48708#54876'_'#49457#50669#54764
+      OnChange = Cbx_SkillTypeChange
+      Items.Strings = (
+        #48708#54876'_'#49457#50669#51452
+        #48708#54876'_'#49457#50669#54764
+        #54876#49457'_'#49457#50669#51452
+        #54876#49457'_'#49457#50669#54764)
+    end
+    object Cbx_ONKey: TComboBox
+      Left = 8
+      Top = 55
+      Width = 43
+      Height = 22
+      Style = csOwnerDrawFixed
+      DropDownCount = 12
+      ItemIndex = 6
+      TabOrder = 6
+      Text = 'F7'
+      OnChange = Cbx_KeyChange
+      Items.Strings = (
+        'F1'
+        'F2'
+        'F3'
+        'F4'
+        'F5'
+        'F6'
+        'F7'
+        'F8'
+        'F9'
+        'F10'
+        'F11'
+        'F12')
+    end
+    object Cbx_OFFKey: TComboBox
+      Left = 54
+      Top = 55
+      Width = 43
+      Height = 22
+      Style = csOwnerDrawFixed
+      DropDownCount = 12
+      ItemIndex = 7
+      TabOrder = 7
+      Text = 'F8'
+      OnChange = Cbx_KeyChange
+      Items.Strings = (
+        'F1'
+        'F2'
+        'F3'
+        'F4'
+        'F5'
+        'F6'
+        'F7'
+        'F8'
+        'F9'
+        'F10'
+        'F11'
+        'F12')
+    end
+  end
+  object pnl_Lock: TPanel
+    Left = 145
+    Top = 0
+    Width = 137
+    Height = 113
+    ParentBackground = False
+    TabOrder = 1
+    Visible = False
+    OnMouseMove = FormMouseMove
+    object edt_Lock: TEdit
+      Left = 20
+      Top = 15
+      Width = 95
+      Height = 21
+      PasswordChar = '*'
+      TabOrder = 0
+      OnKeyPress = edt_LockKeyPress
+    end
+    object Btn_Lock: TButton
+      Left = 32
+      Top = 48
+      Width = 75
+      Height = 25
+      Caption = 'OK'
+      TabOrder = 1
+      OnClick = Btn_LockClick
+    end
+  end
+  object Pnl_Ctrl: TPanel
+    Left = 94
+    Top = 5
+    Width = 45
+    Height = 20
+    Color = 10154973
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentBackground = False
+    ParentFont = False
+    TabOrder = 2
+    OnMouseMove = FormMouseMove
+    object Btn_Minimize: TButton
+      Tag = 3
+      Left = 0
+      Top = 0
+      Width = 20
+      Height = 20
+      Caption = #65293
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 0
+      OnClick = Btn_StartEndClick
+    end
+    object Btn_Close: TButton
+      Tag = 4
+      Left = 25
+      Top = 0
+      Width = 20
+      Height = 20
+      Caption = #215
+      TabOrder = 1
+      OnClick = Btn_StartEndClick
+    end
+  end
+  object Edit1: TEdit
+    Left = 106
+    Top = 79
+    Width = 33
+    Height = 21
+    NumbersOnly = True
+    TabOrder = 3
+    Text = '100'
+  end
+  object Timer_Skill: TTimer
+    Enabled = False
+    Interval = 300
+    OnTimer = Timer_SkillTimer
+    Top = 113
+  end
+  object Timer_Buff: TTimer
+    Enabled = False
+    Interval = 300000
+    OnTimer = Timer_BuffTimer
+    Left = 28
+    Top = 113
+  end
+  object Timer_MSang: TTimer
+    Enabled = False
+    Interval = 33000
+    OnTimer = Timer_MSangTimer
+    Left = 56
+    Top = 113
+  end
+  object Timer_DemageTest: TTimer
+    Enabled = False
+    Interval = 60000
+    OnTimer = Timer_DemageTestTimer
+    Left = 96
+    Top = 113
+  end
+end

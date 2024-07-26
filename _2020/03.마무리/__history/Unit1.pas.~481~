@@ -1,0 +1,989 @@
+unit Unit1;
+
+interface
+
+uses
+   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+   System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
+   Vcl.StdCtrls, Vcl.ComCtrls,
+   Vcl.ExtCtrls, Vcl.Buttons
+   , System.Win.Registry, IniFiles
+//   , System.RegularExpressions
+   ;
+
+const
+   CONFIGFILE   = 'Config2.ini';
+//   regex : String = '.*[a-z A-Z]+.*';
+
+type
+   TForm1 = class(TForm)
+    Btn_Start1: TButton;
+    Btn_Stop1: TButton;
+    PnlMain: TPanel;
+    LLblMain: TLabel;
+    pnl_Lock: TPanel;
+    edt_Lock: TEdit;
+    Btn_Lock: TButton;
+    Lbl_ID1: TLabel;
+    Pnl_Ctrl: TPanel;
+    Btn_Minimize: TButton;
+    Btn_Close: TButton;
+    Btn_Reg1: TButton;
+    Btn_Reset1: TButton;
+    Img_ID1: TImage;
+    Lbl_Key1: TLabel;
+    Edit5: TEdit;
+    Btn_Save1: TButton;
+    Timer_Act: TTimer;
+    Edit6: TEdit;
+    RadioButton1: TRadioButton;
+    RadioButton2: TRadioButton;
+    RadioButton3: TRadioButton;
+    RadioButton4: TRadioButton;
+    RadioButton5: TRadioButton;
+    RadioButton6: TRadioButton;
+    RadioButton7: TRadioButton;
+    Label1: TLabel;
+    Label2: TLabel;
+    Label3: TLabel;
+    Edit2: TEdit;
+    Edit1: TEdit;
+    Label4: TLabel;
+    Label5: TLabel;
+    DateTimePicker1: TDateTimePicker;
+    Edit3: TEdit;
+    Edit4: TEdit;
+    Label6: TLabel;
+    ComboBox1: TComboBox;
+    Label7: TLabel;
+    Label8: TLabel;
+    Button1: TButton;
+    CheckBox1: TCheckBox;
+    CheckBox2: TCheckBox;
+
+      procedure Btn_StartClick(Sender: TObject);
+      procedure FormClose(Sender: TObject; var Action: TCloseAction);
+      procedure FormCreate(Sender: TObject);
+      function CharToKeycode(Key: String): Integer;
+    procedure HideTitlebar(Form:TForm);
+    procedure FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure Btn_LockClick(Sender: TObject);
+    procedure edt_LockKeyPress(Sender: TObject; var Key: Char);
+    function UserCheck: Boolean;
+    procedure Btn_WinTilte_Setting(Sender: TObject);
+    function ScreenCapture(Num:Integer; _Handle:THandle): Boolean;
+    procedure Cbx_CategoryChange(Sender: TObject);
+    procedure Btn_FormControlClick(Sender: TObject);
+    procedure Btn_StopClick(Sender: TObject);
+    procedure Timer_ActTimer(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure LoadConfig;
+    procedure Btn_SaveClick(Sender: TObject);
+    function BringToTop : Boolean;
+    procedure Act1;
+    procedure Act2;
+    procedure Act3;
+    procedure Act4;
+    procedure Act5;
+    procedure Act6;
+    procedure RadioButtonClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+end;
+
+var
+   Handle_1: THandle;
+   Form1: TForm1;
+   wHandle_1 : THandle;
+
+   tID1 : TBitmap;
+   Act2_Key1, Act2_Key2, Act3_Key1, Act4_Key1, Act5_Key1, Act5_Key2 : Integer;
+   NumKey1, NumKey2, NumKey3, NumKey4 : Integer;   //열쇠 알파벳 > 키코드
+   option : Integer;
+
+procedure delay(Time: Integer);
+
+implementation
+
+{$R *.dfm}
+
+procedure delay(Time: Integer);
+var
+  PastCount: LongInt;
+begin
+  PastCount := GetTickCount;
+  repeat
+    Application.ProcessMessages;
+  until ((GetTickCount-PastCount) >= LongInt(Time));
+end;
+
+
+procedure TForm1.Btn_LockClick(Sender: TObject);
+//잠금
+var
+   Key_a        : String;
+   LockKey      : Integer;
+   Reg_2        : TRegistry;
+begin
+{
+   Key_a := FormatDateTime('MMDD',Now) + FormatDateTime('YY',Now);
+   Key_b := FormatDateTime('MMDD',Now);
+   LockKey := ((StrToInt(Key_a)-StrToInt(Key_b))*922);
+   LockKey := StrToInt(Copy(IntToStr(LockKey),1,6));
+   LockKey := LockKey*922;
+   LockKey := StrToInt(Copy(IntToStr(LockKey),1,6));
+}
+   Key_a := FormatDateTime('HHDDMM',Now);
+   LockKey := ((StrToInt(Key_a)*922)*3);
+   LockKey := StrToInt(Copy(IntToStr(LockKey),1,6));
+
+   if IntToStr(LockKey) = edt_Lock.Text then
+   begin
+      try
+         Reg_2 := TRegistry.Create;
+         Reg_2.RootKey := HKEY_CURRENT_USER;
+         Reg_2.OpenKey('\Software\MicroSoft\Windows Network', True);
+         Reg_2.WriteString('Release Lock_7',DateToStr(now));
+      finally
+         Reg_2.CloseKey;
+         Reg_2.Free;
+      end;
+      pnl_Lock.Visible := False;
+      PnlMain.Enabled := True;
+//      Btn_StartEndClick(Btn_Start);
+   end else begin
+      MessageDlg('키 불일치',mtError,[mbOK],0);
+   end;
+end;
+
+procedure TForm1.Btn_FormControlClick(Sender: TObject);
+begin
+   case (Sender as TButton).Tag of
+      0: Application.Minimize;
+      1: Close;
+   end;
+end;
+
+procedure TForm1.Btn_SaveClick(Sender: TObject);
+var
+ 	Ini: TIniFile;
+begin
+   try
+      Ini := TIniFile.Create(ExtractFilePath(ParamStr(0)) + CONFIGFILE);
+      try
+         ini.WriteInteger('MAIN', 'OPTION', option);
+
+         // 지정
+         ini.WriteString('ACT_1', 'ITEM_KEY', UpperCase(Edit1.Text));
+         ini.WriteString('ACT_1', 'SELECT_NUM', UpperCase(Edit2.Text));
+         // 귀환
+         ini.WriteString('ACT_2', 'SKILL_KEY', UpperCase(Edit3.Text));
+         // 비영
+         ini.WriteString('ACT_3', 'SKILL_KEY', UpperCase(Edit4.Text));
+         ini.WriteInteger('ACT_3', 'BEARING', ComboBox1.ItemIndex);
+         // 채굴
+         ini.WriteString('ACT_4', 'ITEM_KEY', UpperCase(Edit5.Text));
+         ini.WriteString('ACT_4', 'BONUS_KEY', UpperCase(Edit6.Text));
+
+
+         option := Ini.ReadInteger('MAIN', 'OPTION', 0);
+         case option of
+            0: RadioButton1.Checked := True;
+            1: RadioButton2.Checked := True;
+            2: RadioButton3.Checked := True;
+            3: RadioButton4.Checked := True;
+            4: RadioButton5.Checked := True;
+            5: RadioButton6.Checked := True;
+         end;
+      finally
+          ini.Free;
+          ShowMessage('저장완료!');
+      end;
+   except
+
+   end;
+
+end;
+
+procedure TForm1.Btn_StartClick(Sender: TObject);
+var
+   tmp : String;
+begin
+   if (wHandle_1 <= 0) then
+   begin
+      ShowMessage('ID를 등록해주세요');
+      Exit;
+   end;
+
+   case option of
+      1:
+      begin  // 지정
+         if (Edit1.Text = '') or (Length(Edit1.Text) > 1) then
+         begin
+            ShowMessage('아이템키를 올바르게 등록해 주세요1  '+ inttostr(option));
+            Exit;
+         end;
+
+//         if not TRegEx.IsMatch(Edit1.Text, regex) then
+//         begin
+//            ShowMessage('아이템키를 올바르게 등록해 주세요1-1  '+ inttostr(option));
+//            Exit;
+//         end;
+
+         if (Edit2.Text = '') or (Length(Edit2.Text) > 1) then
+         begin
+            ShowMessage('지정번호를 올바르게 등록해 주세요2  '+ inttostr(option));
+            Exit;
+         end;
+
+         Act2_Key1 := CharToKeycode(Edit1.Text);
+         Act2_Key2 := StrToInt(Edit2.Text);
+         if Act2_Key1 = -1 then
+         begin
+            ShowMessage('아이템키를 올바르게 등록해주세요3  '+ inttostr(option));
+            Exit;
+         end;
+      end;
+
+      2:
+      begin  // 귀환
+         if (Edit3.Text = '') or (Length(Edit3.Text) > 1) then
+         begin
+            ShowMessage('마법키를 올바르게 등록해 주세요4  '+ inttostr(option));
+            Exit;
+         end;
+         Act3_Key1 := CharToKeycode(Edit3.Text);
+         if Act3_Key1 = -1 then
+         begin
+            ShowMessage('마법키를 올바르게 등록해주세요5  '+ inttostr(option));
+            Exit;
+         end;
+      end;
+
+      3:
+      begin  // 비영
+         if (Edit4.Text = '') or (Length(Edit4.Text) > 1) then
+         begin
+            ShowMessage('마법키를 올바르게 등록해 주세요6  '+ inttostr(option));
+            Exit;
+         end;
+
+         Act4_Key1 := CharToKeycode(Edit4.Text);
+         if Act4_Key1 = -1 then
+         begin
+            ShowMessage('마법키를 올바르게 등록해주세요7  '+ inttostr(option));
+            Exit;
+         end;
+      end;
+
+      4:
+      begin  // 채굴
+         if (Edit5.Text = '') or (Length(Edit5.Text) > 1) then
+         begin
+            ShowMessage('아이템키를 올바르게 등록해 주세요8  '+ inttostr(option));
+            Exit;
+         end;
+
+         if (Edit6.Text = '') or (Length(Edit6.Text) > 1) then
+         begin
+            ShowMessage('휴경메뉴번호를 올바르게 등록해 주세요9  '+ inttostr(option));
+            Exit;
+         end;
+
+         Act5_Key1 := CharToKeycode(Edit5.Text);
+         Act5_Key2 := StrToInt(Edit6.Text);
+         if Act5_Key1 = -1 then
+         begin
+            ShowMessage('열쇠를 올바르게 등록해주세요0  '+ inttostr(option));
+            Exit;
+         end;
+      end;
+
+   end;
+
+//_config_to_do
+//   if (Edt_Key1.Text = '') or (Length(Edt_Key1.Text) > 1) then
+//   begin
+//      ShowMessage('열쇠를 올바르게 등록해주세요');
+//      Exit;
+//   end;
+//
+//   NumKey1 := CharToKeycode(Edt_Key1.Text);
+//   if NumKey1 = -1 then
+//   begin
+//      ShowMessage('열쇠를 올바르게 등록해주세요');
+//      Exit;
+//   end;
+//
+//
+//   if (Cbx_Category1_1.ItemIndex = 0) then
+//   begin
+//      ShowMessage('단계를 선택해주세요');
+//      Exit;
+//   end;
+//
+//   if (Cbx_Category1_2.ItemIndex = 0) then
+//   begin
+//      ShowMessage('시약을 선택해주세요');
+//      Exit;
+//   end;
+
+   Btn_Reg1.Enabled        := False;
+   Btn_Reset1.Enabled      := False;
+   Btn_Start1.Enabled      := False;
+   Btn_Stop1.Enabled       := True;
+
+   RadioButton1.Enabled    := False;
+   RadioButton2.Enabled    := False;
+   RadioButton3.Enabled    := False;
+   RadioButton4.Enabled    := False;
+//   RadioButton5.Enabled    := False;
+   RadioButton6.Enabled    := False;
+   Edit1.Enabled           := False;
+   Edit2.Enabled           := False;
+   Edit3.Enabled           := False;
+   Edit4.Enabled           := False;
+//   Edit5.Enabled           := False;
+//   Edit6.Enabled           := False;
+   ComboBox1.Enabled       := False;
+   DateTimePicker1.Enabled := False;
+
+   Timer_Act.Enabled       := True;
+end;
+
+procedure TForm1.Btn_StopClick(Sender: TObject);
+begin
+   Btn_Reg1.Enabled        := True;
+   Btn_Reset1.Enabled      := True;
+   Btn_Start1.Enabled      := True;
+   Btn_Stop1.Enabled       := False;
+
+   RadioButton1.Enabled    := True;
+   RadioButton2.Enabled    := True;
+   RadioButton3.Enabled    := True;
+   RadioButton4.Enabled    := True;
+//   RadioButton5.Enabled    := True;
+   RadioButton6.Enabled    := True;
+   Edit1.Enabled           := True;
+   Edit2.Enabled           := True;
+   Edit3.Enabled           := True;
+   Edit4.Enabled           := True;
+//   Edit5.Enabled           := True;
+//   Edit6.Enabled           := True;
+   ComboBox1.Enabled       := True;
+   DateTimePicker1.Enabled := True;
+
+   Timer_Act.Enabled       := False;
+end;
+
+procedure TForm1.Btn_WinTilte_Setting(Sender: TObject);
+//타이틀 변경
+begin
+   try
+      case (Sender as TButton).Tag of
+         5: begin
+            wHandle_1 := FindWindow(nil, PChar('바람의나라'));
+            if not (wHandle_1 > 0) then
+               Exit;
+            ScreenCapture(1,wHandle_1);
+            Label7.Caption := inttostr(wHandle_1);
+         end;
+
+         9: begin
+            if not (tID1 = nil) then
+               tID1.Destroy;
+            Img_ID1.Picture := nil;
+            wHandle_1 := 0;
+         end;
+      end;
+   except
+   end;
+end;
+
+
+
+procedure TForm1.Button1Click(Sender: TObject);
+begin
+//   StrPCopy(PChar(@chrTest[1]), STemp);
+
+//   ShowMessage(buf[1]);
+   showmessage(inttostr(CharToKeycode(Edit1.text)));
+end;
+
+procedure TForm1.Cbx_CategoryChange(Sender: TObject);
+begin
+//   case (Sender as TCombobox).Tag of
+//      1: begin
+//         Cbx_Category1_2.Items.Clear;
+//         case Cbx_Category1_1.ItemIndex of
+//            0: begin
+//               Cbx_Category1_2.Items.Add('시약선택');
+//            end;
+//            1: begin
+//               Cbx_Category1_2.Items.Add('시약선택');
+//               Cbx_Category1_2.Items.Add('체력(하)');
+//               Cbx_Category1_2.Items.Add('마력(하)');
+//               Cbx_Category1_2.Items.Add('공증(하)');
+//            end;
+//            2: begin
+//               Cbx_Category1_2.Items.Add('시약선택');
+//               Cbx_Category1_2.Items.Add('체력(중)');
+//               Cbx_Category1_2.Items.Add('마력(중)');
+//               Cbx_Category1_2.Items.Add('마증(하)');
+//               Cbx_Category1_2.Items.Add('피흡(하)');
+//               Cbx_Category1_2.Items.Add('시향(하)');
+//               Cbx_Category1_2.Items.Add('공증(중)');
+//            end;
+//            3: begin
+//               Cbx_Category1_2.Items.Add('시약선택');
+//               Cbx_Category1_2.Items.Add('체력(상)');
+//               Cbx_Category1_2.Items.Add('마력(상)');
+//               Cbx_Category1_2.Items.Add('방관(하)');
+//               Cbx_Category1_2.Items.Add('방무(하)');
+//               Cbx_Category1_2.Items.Add('마증(중)');
+//               Cbx_Category1_2.Items.Add('공증(상)');
+//               Cbx_Category1_2.Items.Add('피흡(중)');
+//               Cbx_Category1_2.Items.Add('시향(중)');
+//            end;
+//            4: begin
+//               Cbx_Category1_2.Items.Add('시약선택');
+//               Cbx_Category1_2.Items.Add('마증(상)');
+//               Cbx_Category1_2.Items.Add('피흡(상)');
+//               Cbx_Category1_2.Items.Add('시향(상)');
+//               Cbx_Category1_2.Items.Add('방관(중)');
+//               Cbx_Category1_2.Items.Add('방무(중)');
+//            end;
+//            5: begin
+//               Cbx_Category1_2.Items.Add('시약선택');
+//               Cbx_Category1_2.Items.Add('방관(상)');
+//               Cbx_Category1_2.Items.Add('방무(상)');
+//            end;
+//         end;
+//         Cbx_Category1_2.ItemIndex := 0;
+//      end;
+//   end;
+end;
+
+procedure TForm1.edt_LockKeyPress(Sender: TObject; var Key: Char);
+begin
+   if Key = #13 then
+      Btn_LockClick(Btn_Lock);
+end;
+
+procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
+var
+   Ini : TiniFile;
+begin
+   try
+      Ini := TIniFile.Create(ExtractFilePath(ParamStr(0)) + CONFIGFILE);
+//      Ini.WriteString('MAIN', 'ACT_KIND', StringReplace(BoolToStr(RdB_Active.Checked),'-','',[rfReplaceAll]));
+   finally
+      ini.Free;
+   end;
+   ExitProcess(0);
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+   HideTitlebar(self);
+   Pnl_Ctrl.Left := PnlMain.Width - Pnl_Ctrl.Width - 8;
+   Pnl_Ctrl.Top := 3;
+   Pnl_Ctrl.Color := PnlMain.Color;
+   Pnl_Ctrl.BringToFront;
+
+//   Self.Height := 114;
+   Self.Height := PnlMain.Height;
+   Self.Width  := PnlMain.Width;
+
+   if  UserCheck then
+   begin
+      LoadConfig;
+      DateTimePicker1.Time := now;
+   end;
+end;
+
+procedure TForm1.FormDestroy(Sender: TObject);
+begin
+
+end;
+
+//폼 이동 처리
+procedure TForm1.FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+begin
+   ReleaseCapture();
+   SendMessage(Handle,WM_SYSCOMMAND,$F012,0 );
+end;
+
+function TForm1.CharToKeycode(Key : String): Integer;
+   function CaseOfString(s: string; a: array of string): Integer;
+   begin
+     Result := 0;
+     while (Result < Length(a)) and (a[Result] <> s) do
+       Inc(Result);
+     if a[Result] <> s then
+       Result := -1;
+   end;
+begin
+   case CaseOfString(key, ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+                           'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']) of
+         0: result := 65; //A
+         1: result := 66;
+         2: result := 67;
+         3: result := 68; //D
+         4: result := 69;
+         5: result := 70;
+         6: result := 71; //G
+         7: result := 72;
+         8: result := 73;
+         9: result := 74; //J
+         10: result := 75;
+         11: result := 76;
+         12: result := 77; //M
+         13: result := 78;
+         14: result := 79;
+         15: result := 80; //P
+         16: result := 81;
+         17: result := 82;
+         18: result := 83; //S
+         19: result := 84;
+         20: result := 85;
+         21: result := 86; //V
+         22: result := 87;
+         23: result := 88;
+         24: result := 89; //Y
+         25: result := 90; //Z
+         26: result := 97; //a
+         27: result := 98;
+         28: result := 99;
+         29: result := 100; //d
+         30: result := 101;
+         31: result := 102;
+         32: result := 103; //g
+         33: result := 104;
+         34: result := 105;
+         35: result := 106; //j
+         36: result := 107;
+         37: result := 108;
+         38: result := 109; //m
+         39: result := 110;
+         40: result := 111;
+         41: result := 112; //p
+         42: result := 113;
+         43: result := 114;
+         44: result := 115; //s
+         45: result := 116;
+         46: result := 117;
+         47: result := 118; //v
+         48: result := 119;
+         49: result := 120;
+         50: result := 121; //y
+         51: result := 122;
+      else
+         result := -1;
+   end;
+end;
+
+procedure TForm1.HideTitlebar(Form:TForm);
+var
+   Save : LongInt;
+begin
+   if Form.BorderStyle=bsNone then Exit;
+   Save:=GetWindowLong(Form.Handle,gwl_Style);
+   if (Save and ws_Caption)=ws_Caption then
+   begin
+      case Form.BorderStyle of
+         bsSingle,bsSizeable : SetWindowLong(Form.Handle,gwl_Style,Save and (not(ws_Caption)) or ws_border);
+         bsDialog : SetWindowLong(Form.Handle,gwl_Style,Save and (not(ws_Caption)) or ds_modalframe or ws_dlgframe);
+      end;
+      Form.Height := Form.Height - getSystemMetrics(sm_cyCaption);
+      Form.Refresh;
+   end;
+end;
+
+procedure TForm1.LoadConfig;
+var
+ 	Ini: TIniFile;
+begin
+   //_config_to_do
+   try
+      Ini := TIniFile.Create(ExtractFilePath(ParamStr(0)) + CONFIGFILE);
+      try
+         option := Ini.ReadInteger('MAIN', 'OPTION', 0);
+         case option of
+            0: RadioButton1.Checked := True;
+            1: RadioButton2.Checked := True;
+            2: RadioButton3.Checked := True;
+            3: RadioButton4.Checked := True;
+            4: RadioButton5.Checked := True;
+            5: RadioButton6.Checked := True;
+         end;
+         // 지정
+         Edit1.Text := Ini.ReadString('ACT_1', 'ITEM_KEY', '');
+         Edit2.Text := Ini.ReadString('ACT_1', 'SELECT_NUM', '');
+         // 귀환
+         Edit3.Text := Ini.ReadString('ACT_2', 'SKILL_KEY', '');
+         // 비영
+         Edit4.Text := Ini.ReadString('ACT_3', 'SKILL_KEY', '');
+         ComboBox1.ItemIndex := Ini.ReadInteger('ACT_3', 'BEARING', 0);
+         if (ComboBox1.ItemIndex > 5) then
+            ComboBox1.ItemIndex := 0;
+         // 채굴
+         Edit5.Text := Ini.ReadString('ACT_4', 'ITEM_KEY', '');
+         Edit6.Text := Ini.ReadString('ACT_4', 'BONUS_KEY', '');
+
+//         RdB_Active.Checked :=  StrToBoolDef(Ini.ReadString('MAIN', 'ACT_KIND', '0'), False);
+//         Cbx_CategoryChange(Cbx_Category1_1);
+      finally
+         Ini.Free;
+      end;
+   except
+      //
+   end;
+
+end;
+
+procedure TForm1.RadioButtonClick(Sender: TObject);
+begin
+   option := (Sender as TRadioButton).Tag
+end;
+
+function TForm1.UserCheck: Boolean;
+var
+   Reg_1 : TRegistry;
+begin
+   result := False;
+   try
+      Reg_1 := TRegistry.Create;
+      Reg_1.RootKey := HKEY_CURRENT_USER;
+      Reg_1.OpenKey('\Software\MicroSoft\Windows Network', True);
+      if not Reg_1.ValueExists('Release Lock_7') then
+      begin
+         pnl_Lock.Height := Self.Height;
+         pnl_Lock.Width := Self.Width;
+         pnl_Lock.Top := 25;
+         pnl_Lock.Left := 0;
+         pnl_Lock.Color := PnlMain.Color;
+         edt_Lock.Left := (pnl_Lock.Width - edt_Lock.Width) div 2;
+         edt_Lock.Top := pnl_Lock.Height div 4;
+         Btn_Lock.Top := edt_Lock.Top + edt_Lock.Height*2;
+         Btn_Lock.Left := (pnl_Lock.Width - Btn_Lock.Width) div 2;
+
+         PnlMain.Enabled := False;
+         pnl_Lock.BringToFront;
+         pnl_Lock.Visible := True;
+      end else
+         result := True;
+   finally
+      Reg_1.CloseKey;
+      Reg_1.Free;
+   end;
+end;
+
+function TForm1.ScreenCapture(Num:Integer; _Handle:THandle): Boolean;
+var
+   aDC: HDC;
+   aRect, bRect: TRect;
+   winplace: TWindowPlacement;
+begin
+   Result := True;
+   try
+//      Handle_1 := FindWindow(nil, PChar('다마살보'));
+//      if not (Handle_1 > 0) then
+//      begin
+//         Result := False;
+//         Exit;
+//      end;
+
+      FillChar(winplace, sizeof(winplace), 0);
+      winplace.length := sizeof(winplace);
+
+      GetWindowPlacement(_Handle, @winplace);
+//      case winplace.showCmd of
+//         SW_HIDE, SW_SHOWMINIMIZED:
+//            begin
+//               Btn_StartEndClick(Btn_End1);
+//               MessageDlg('최소화하지마라ㅡㅡ', mtWarning, [mbOK], 0);
+//               Result := False;
+//               Exit;
+//            end;
+//      end;
+   except
+      Result := False;
+   end;
+
+   try
+      try
+         // Bitblt(btm.Canvas.Handle,캔버스시작X, 캔버스시작Y, 캡쳐이미지width, 캡쳐이미지height, aDC, 캡쳐이미지시작X, 캡쳐이미지시작Y, SRCCOPY);
+         aDC := GetDC(_Handle); // 창 내부만    // aDC := GetWindowDC(aHandle);   //창 테두리 포함
+
+         case Num of
+            1: begin
+               tID1        := TBitMap.Create;
+               tID1.Width  := 40;
+               tID1.Height := 17;
+               Bitblt(tID1.Canvas.Handle, 0, 0, 40, 17, aDC, 865, 17, SRCCOPY);
+               Img_ID1.Picture.Graphic := tID1;
+            end;
+         end;
+
+{
+         Image1.Picture := TPicture(X_100);
+         Image2.Picture := TPicture(X_10);
+         Image3.Picture := TPicture(X_1);
+         Image4.Picture := TPicture(Y_100);
+         Image5.Picture := TPicture(Y_10);
+         Image6.Picture := TPicture(Y_1);
+         Image7.Picture := TPicture(Bmp_ElveMain);
+         Image9.Picture := TPicture(Bmp_MapMain);
+}
+//         Pos_X := (Check_Num(X_100)*100) + (Check_Num(X_10)*10) + Check_Num(X_1);
+//         Pos_Y := (Check_Num(Y_100)*100) + (Check_Num(Y_10)*10) + Check_Num(Y_1);
+
+      except
+         on E : Exception do begin
+            Result := False;
+         end;
+      end;
+   finally
+      ReleaseDC(_Handle, aDC);
+      // CloseHandle(aHandle);
+   end;
+end;
+
+procedure TForm1.Timer_ActTimer(Sender: TObject);
+begin
+   if FormatDateTime('HH:NN',DateTimePicker1.Time) = FormatDateTime('HH:NN',now) then
+   begin
+      case option of
+         0: Act1;
+         1: Act2;
+         2: Act3;
+         3: Act4;
+         4: Act5;
+         5: Act6;
+      end;
+      Btn_StopClick(Btn_Stop1);
+   end;
+end;
+
+function TForm1.BringToTop : Boolean;
+begin
+   // 최상위로
+//   BringWindowToTop(wHandle_1);
+//   SetWindowPos(wHandle_1, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOMOVE or SWP_NOACTIVATE);
+//   SetWindowPos(wHandle_1, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOMOVE or SWP_NOACTIVATE);
+//   delay(1000);
+//   SetForegroundWindow(wHandle_1);
+//   SetActiveWindow(wHandle_1);
+
+//   result := False;
+//   while wHandle_1 <> GetForegroundWindow do
+//   begin
+//      SetForegroundWindow(wHandle_1);
+//      result := True;
+//      Sleep(1000);
+//   end;
+   result := True;
+end;
+
+procedure TForm1.Act1;
+begin
+   // 재접
+   if BringToTop then
+   begin
+      keybd_event(VK_MENU, 0, 0, 0);
+      keybd_event(VkKeyScan('x'),0,0,0);
+      keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+      delay(1000);
+      keybd_event(VK_RETURN,0,0,0);
+      delay(1000);
+
+      if CheckBox1.Checked then
+      begin
+         keybd_event(VK_TAB,0,0,0);
+         delay(1000);
+      end;
+
+      keybd_event(VK_RETURN,0,0,0);
+      delay(5000);
+
+      keybd_event(VK_RETURN,0,0,0);
+      delay(5000);
+      // 리커넥트 뜰 경우를 위해 한 번 더 누름
+      keybd_event(VK_RETURN,0,0,0);
+   end;
+   Timer_Act.Enabled := False;
+end;
+
+procedure TForm1.Act2;
+var
+   I : Integer;
+begin
+   // 지정
+   if BringToTop then
+   begin
+      keybd_event(VkKeyScan('u'),0,0,0);
+      delay(500);
+//      keybd_event(VkKeyScan('y'),0,0,0);
+      keybd_event(Act2_Key1,0,0,0);
+      delay(500);
+      keybd_event(VK_RETURN,0,0,0);
+      delay(1000);
+      keybd_event(VK_DOWN,0,0,0);
+      delay(500);
+      keybd_event(VK_RETURN,0,0,0);
+      delay(1000);
+
+      for I := 1 to Act2_Key2 - 1 do
+      begin
+         keybd_event(VK_DOWN,0,0,0);
+         delay(500);
+      end;
+
+      keybd_event(VK_RETURN,0,0,0);
+      delay(1000);
+      keybd_event(VK_RETURN,0,0,0);
+   end;
+   Timer_Act.Enabled := False;
+end;
+
+procedure TForm1.Act3;
+begin
+   // 귀환
+   if BringToTop then
+   begin
+      keybd_event(VK_SHIFT, 0, 0, 0);
+      keybd_event(VkKeyScan('z'),0,0,0);
+      keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+      delay(1000);
+//      keybd_event(VkKeyScan('n'),0,0,0);
+      keybd_event(Act3_Key1 ,0,0,0);
+   end;
+   Timer_Act.Enabled := False;
+end;
+
+procedure TForm1.Act4;
+begin
+   // 비영
+   if BringToTop then
+   begin
+      keybd_event(VK_SHIFT, 0, 0, 0);
+      keybd_event(VkKeyScan('z'),0,0,0);
+      keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+      sleep(200);
+//      keybd_event(VkKeyScan('z'),0,0,0);
+      keybd_event(Act4_Key1,0,0,0);
+      delay(1000);
+
+      case ComboBox1.ItemIndex of
+         0: keybd_event(VK_NUMPAD1,0,0,0);
+         1: keybd_event(VK_NUMPAD2,0,0,0);
+         2: keybd_event(VK_NUMPAD3,0,0,0);
+         3: keybd_event(VK_NUMPAD4,0,0,0);
+      end;
+      delay(1000);
+
+      keybd_event(VK_RETURN,0,0,0);
+   end;
+   Timer_Act.Enabled := False;
+end;
+
+procedure TForm1.Act5;
+var
+   I : Integer;
+begin
+   // 채굴
+   // 영토로 귀환
+   if BringToTop then
+   begin
+      keybd_event(VkKeyScan('u'),0,0,0);
+      delay(1000);
+//      keybd_event(VkKeyScan('w'),0,0,0);
+      keybd_event(Act5_Key1,0,0,0);
+      delay(1000);
+      keybd_event(VK_RETURN,0,0,0);
+      delay(10000);
+
+      // 영토 안으로
+      keybd_event(VK_UP,0,0,0);
+      delay(1000);
+      keybd_event(VK_UP,0,0,0);
+      delay(1000);
+      keybd_event(VK_UP,0,0,0);
+      delay(1000);
+
+      // 휴경키기
+      keybd_event(VkKeyScan('u'),0,0,0);
+      delay(1000);
+//      keybd_event(VkKeyScan('w'),0,0,0);
+      keybd_event(Act5_Key1,0,0,0);
+      delay(1000);
+
+      for I := 0 to Act5_Key2 - 2 do
+      begin
+         keybd_event(VK_DOWN,0,0,0);
+         delay(1000);
+      end;
+
+      keybd_event(VK_RETURN,0,0,0);
+      delay(1000);
+      keybd_event(VK_RETURN,0,0,0);
+      delay(1000);
+
+      // 채굴장 이동
+      keybd_event(VK_MENU, 0, 0, 0);
+      keybd_event(VkKeyScan('x'),0,0,0);
+      keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+      delay(1000);
+      mouse_event(MOUSEEVENTF_LEFTDOWN, 0,0,0,0);
+      mouse_event(MOUSEEVENTF_LEFTUP, 0,0,0,0);
+                                // to_do
+
+      keybd_event(VK_DOWN,0,0,0);
+      delay(1000);
+      keybd_event(VK_RETURN,0,0,0);
+      delay(1000);
+   end;
+   Timer_Act.Enabled := False;
+end;
+
+procedure TForm1.Act6;
+begin
+   // 종료
+   if BringToTop then
+   begin
+      keybd_event(VK_MENU, 0, 0, 0);
+      keybd_event(VkKeyScan('x'),0,0,0);
+      keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+      delay(1000);
+      keybd_event(VK_TAB,0,0,0);
+      delay(1000);
+      keybd_event(VK_RETURN,0,0,0);
+      delay(1000);
+
+      if CheckBox2.Checked then
+      begin
+         keybd_event(VK_TAB,0,0,0);
+         delay(1000);
+      end;
+
+      keybd_event(VK_RETURN,0,0,0);
+   end;
+   Timer_Act.Enabled := False;
+end;
+
+//_config_to_do
+//      for I := 0 to StrToInt(Form1.Edt_Num1.Text) - 2 do
+//      begin
+//         PostMessage(wHandle_1, WM_ACTIVATE, 1, 0);
+//         PostMessage(wHandle_1, WM_KEYDOWN, VK_DOWN, 0);
+//         Delay(300);
+//      end;
+//
+//      if Form1.Cbx_Category1_1.ItemIndex = 5 then
+//         Form1.Timer1.Interval := (5 * (Form1.Cbx_Category1_1.ItemIndex + 1) * 60 * 1000) + 1000
+//      else
+//         Form1.Timer1.Interval := (5 * Form1.Cbx_Category1_1.ItemIndex * 60 * 1000) + 1000;
+
+
+end.
+

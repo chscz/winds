@@ -1,0 +1,15 @@
+program Project1;
+
+uses
+  Vcl.Forms,
+  Unit1 in 'Unit1.pas' {Form3},
+  untImageSearch in 'untImageSearch.pas';
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := False;
+  Application.CreateForm(TForm3, Form3);
+  Application.Run;
+end.

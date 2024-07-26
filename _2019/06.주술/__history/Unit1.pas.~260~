@@ -1,0 +1,1026 @@
+unit Unit1;
+
+//{$DEFINE _LOG_}
+
+interface
+
+uses
+   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+   System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
+   Vcl.StdCtrls, Vcl.ComCtrls,
+   Vcl.ExtCtrls, Vcl.Buttons
+   , System.Win.Registry;
+
+const
+   BasicTitle = '바람의나라';
+
+type
+   TForm1 = class(TForm)
+      Btn_Start: TButton;
+      Btn_End: TButton;
+    PnlMain: TPanel;
+    LLblMain: TLabel;
+    pnl_Lock: TPanel;
+    edt_Lock: TEdit;
+    Btn_Lock: TButton;
+    Pnl_Ctrl: TPanel;
+    Btn_Minimize: TButton;
+    Btn_Close: TButton;
+    Btn_SignUp: TButton;
+    Btn_Help: TButton;
+    Btn_Reset: TButton;
+    Img_ID1: TImage;
+    Cbx_SkillType: TComboBox;
+    Cbx_ONKey: TComboBox;
+    Cbx_OFFKey: TComboBox;
+    Timer_Skill: TTimer;
+    Timer_Buff: TTimer;
+    Timer_MSang: TTimer;
+    Timer_DemageTest: TTimer;
+    Edit1: TEdit;
+    Memo1: TMemo;
+
+      procedure Btn_StartEndClick(Sender: TObject);
+      procedure FormClose(Sender: TObject; var Action: TCloseAction);
+      procedure FormCreate(Sender: TObject);
+      function NumkeyToKeycode(Num: Integer): Integer;
+      function FunckeyToKeycode(ItemIndex: Integer): Integer;
+    procedure HideTitlebar(Form:TForm);
+    procedure FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure Btn_LockClick(Sender: TObject);
+    procedure edt_LockKeyPress(Sender: TObject; var Key: Char);
+    function UserCheck: Boolean;
+    procedure Btn_WinTilte_Setting(Sender: TObject);
+    procedure Btn_HelpClick(Sender: TObject);
+    function ScreenCapture(Num:Integer; _Handle:THandle): Boolean;
+    procedure Timer_SkillTimer(Sender: TObject);
+    procedure Timer_BuffTimer(Sender: TObject);
+    procedure Timer_MSangTimer(Sender: TObject);
+    procedure Cbx_KeyChange(Sender: TObject);
+    procedure Cbx_SkillTypeChange(Sender: TObject);
+    procedure Timer_DemageTestTimer(Sender: TObject);
+    procedure Skill(Mode : Integer);
+   end;
+
+var
+   Handle_1 : THandle;
+   Form1    : TForm1;
+   HookID   : HHOOK;
+   tID1     : TBitmap;
+   KeyStart : Integer;
+   KeyEnd   : Integer;
+   sFlag    : Boolean;
+   bFlag    : Boolean;
+   mFlag    : Boolean;
+   tFlag    : Boolean;
+   Mode     : Integer;
+procedure KeybdHook;
+procedure KeybdUnhook;
+
+implementation
+
+{$R *.dfm}
+
+type
+   PKeyHookStruct = ^TKeyHookStruct;
+
+   TKeyHookStruct = record
+      vkCode: Integer;
+      ScanCode: Integer;
+      Flags: Integer;
+      Time: Integer;
+      dwExtraInfo: Integer;
+   end;
+   // 키 입력 필터링 함수
+
+function LLKeyHookFunc(HookCode: Integer; KeyCode: wParam; kStrokeInfo: lParam)
+  : LResult; stdcall;
+var
+   PKeyHook: PKeyHookStruct;
+   idlestate: Boolean;
+   NHandle: THandle;
+   KeyFlag: Boolean;
+   Len: LongInt;
+   Title: String;
+   TitleTxt: String;
+begin
+   KeyFlag := False;
+   // 키 정보 받아오기
+   PKeyHook := Ptr(kStrokeInfo);
+   if HookCode >= 0 then
+   begin
+      // case로 묶으면 토글키가 눌려져 있네..
+      if (PKeyHook.vkCode = KeyStart) then
+      begin
+         Form1.Btn_StartEndClick(Form1.Btn_Start);
+      end else
+      if (PKeyHook.vkCode = KeyEnd) then
+      begin
+         Form1.Btn_StartEndClick(Form1.Btn_End);
+      end
+      else
+         // 필터링 된 키가 아니라면 계속 진행
+         Result := CallNextHookEx(HookID, HookCode, KeyCode, kStrokeInfo);
+{
+      if (PKeyHook.vkCode = VK_F7) and (GetAsyncKeyState(VK_CONTROL) < -32766) then
+      begin
+//         Form3.Memo1.Lines.Add('창이름변경:'+Form3.WinTitleText1.Text);
+         Handle_1 := GetForegroundWindow;
+         SetWindowText(Handle_1, Form1.Edit1.Text);
+      end else if (PKeyHook.vkCode = VK_F8) and (GetAsyncKeyState(VK_CONTROL) < -32766) then
+      begin
+//         Form3.Memo1.Lines.Add('창이름복원:'+BasicTitle);
+         SetWindowText(GetForegroundWindow, BasicTitle);
+      end else if (PKeyHook.vkCode = VK_F7) then
+      begin
+//         Form1.Memo1.Lines.Add('시작');
+//         Handle_1 := FindWindow(nil, PChar('밀대'));
+         Handle_1 := FindWindow(nil, PChar(Form1.Edit1.Text));
+
+      end else if (PKeyHook.vkCode = VK_F8) then
+      begin
+//         Form1.Memo1.Lines.Add('중지');
+      end {else if (PKeyHook.vkCode = VK_F3) and (GetAsyncKeyState(VK_SHIFT) < -32766) then
+      begin
+         // 항상 맨 위에 아님..
+         Form1.FormStyle := fsNormal;
+         Result := 1;
+      end;}
+//      idlestate := True;
+   end;
+end;
+
+procedure KeybdHook;
+const
+   WH_KEYBOARD_LL = 13;
+begin
+   HookID := SetWindowsHookEx(WH_KEYBOARD_LL, @LLKeyHookFunc, hInstance, 0);
+end;
+
+procedure KeybdUnhook;
+begin
+   UnHookWindowsHookEx(HookID);
+end;
+
+
+procedure TForm1.Btn_HelpClick(Sender: TObject);
+begin
+   Showmessage('- 1성역주 2성역첨 3헬 4혼 6삼매 7명상 0공증' + #13#10 +
+               '- 8행조(쾌시,마력방패,생환,보호,무장)' + #13#10 +
+               '- 33초마다 명상(7) / 300초마다 버프(8)' + #13#10 +
+               '- 등록할 바람창 띄우고 [등록]버튼 누르면 해당 바람창 등록' + #13#10 +
+               '- 다마@XX'
+               );
+end;
+
+procedure TForm1.Btn_LockClick(Sender: TObject);
+//잠금
+var
+   Key_a        : String;
+   LockKey      : Integer;
+   Reg_2        : TRegistry;
+begin
+   Key_a := FormatDateTime('HHDDMM',Now);
+   LockKey := ((StrToInt(Key_a)*922)*6);
+   LockKey := StrToInt(Copy(IntToStr(LockKey),1,6));
+
+   if IntToStr(LockKey) = edt_Lock.Text then
+   begin
+      try
+         Reg_2 := TRegistry.Create;
+         Reg_2.RootKey := HKEY_CURRENT_USER;
+         Reg_2.OpenKey('\Software\MicroSoft\Windows Network', True);
+         Reg_2.WriteString('Release Lock_6',DateToStr(now));
+      finally
+         Reg_2.CloseKey;
+         Reg_2.Free;
+      end;
+      pnl_Lock.Visible := False;
+      PnlMain.Enabled := True;
+//      Btn_StartEndClick(Btn_Start);
+   end else begin
+      MessageDlg('키 불일치',mtError,[mbOK],0);
+   end;
+end;
+
+procedure TForm1.Btn_StartEndClick(Sender: TObject);
+begin
+   case (Sender as TButton).Tag of
+      1:
+         begin
+{$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'Start!!!!!!'); {$ENDIF}
+            if (Handle_1 <= 0) then
+            begin
+               ShowMessage('Master 없음');
+               Exit;
+            end;
+            Btn_Start.Enabled     := False;
+            Btn_End.Enabled       := True;
+            Btn_SignUp.Enabled    := False;
+            Btn_Reset.Enabled     := False;
+            Cbx_ONKey.Enabled     := False;
+            Cbx_OFFKey.Enabled    := False;
+            Cbx_SkillType.Enabled := False;
+
+            sFlag := True;
+            tFlag := True;
+            Timer_Skill.Enabled := True;
+//            Skill(1);
+            Timer_Buff.Enabled  := True;
+            Timer_MSang.Enabled := True;
+
+//            Timer_DemageTest.Interval := StrToInt(Edit1.Text)*1000;
+//            Timer_DemageTest.Enabled  := True;
+//            KeybdHook;
+//            Form1.Memo1.Lines.Add('On!!!!!!!!!');
+         end;
+      2:
+         begin
+{$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'End!!!!!!'); {$ENDIF}
+            sFlag := False;
+            Btn_Start.Enabled     := True;
+            Btn_End.Enabled       := False;
+            Btn_SignUp.Enabled    := True;
+            Btn_Reset.Enabled     := True;
+            Cbx_ONKey.Enabled     := True;
+            Cbx_OFFKey.Enabled    := True;
+            Cbx_SkillType.Enabled := True;
+
+            Timer_Skill.Enabled := False;
+            Timer_Buff.Enabled  := False;
+            Timer_MSang.Enabled := False;
+//            KeybdUnhook;
+//            Form1.Memo1.Lines.Add('Off!!!!!!!!');
+         end;
+      3: Application.Minimize;
+      4: Close;
+   end;
+
+end;
+
+procedure TForm1.Btn_WinTilte_Setting(Sender: TObject);
+//타이틀 변경
+var
+   wHandle : THandle;
+
+   function ScreenCapture_ID : Boolean;
+   var
+      aDC: HDC;
+      winplace: TWindowPlacement;
+   begin
+      Result := True;
+      try
+         FillChar(winplace, sizeof(winplace), 0);
+         winplace.length := sizeof(winplace);
+
+         GetWindowPlacement(Handle_1, @winplace);
+         case winplace.showCmd of
+            SW_HIDE, SW_SHOWMINIMIZED:
+               begin
+                  Btn_StartEndClick(Btn_End);
+                  MessageDlg('최소화하지마라ㅡㅡ', mtWarning, [mbOK], 0);
+                  Result := False;
+                  Exit;
+               end;
+         end;
+      except
+         Result := False;
+      end;
+
+      try
+         try
+            // Bitblt(btm.Canvas.Handle,캔버스시작X, 캔버스시작Y, 캡쳐이미지width, 캡쳐이미지height, aDC, 캡쳐이미지시작X, 캡쳐이미지시작Y, SRCCOPY);
+            aDC := GetDC(Handle_1); // 창 내부만    // aDC := GetWindowDC(aHandle);   //창 테두리 포함
+            tID1        := TBitMap.Create;
+            tID1.Width  := 40;
+            tID1.Height := 17;
+            Bitblt(tID1.Canvas.Handle, 0, 0, 40, 17, aDC, 865, 17, SRCCOPY);
+            Img_ID1.Picture := TPicture(tID1);
+         except
+            on E : Exception do begin
+               Result := False;
+            end;
+         end;
+      finally
+//         aDC.
+         ReleaseDC(Handle_1, aDC);
+      end;
+   end;
+begin
+   try
+      case (Sender as TButton).Tag of
+         5: begin
+            Handle_1 := FindWindow(nil, PChar('바람의나라'));
+            if not (Handle_1 > 0) then
+               Exit;
+            if not ScreenCapture_ID then
+               Exit;
+         end;
+         6: begin
+            Handle_1 := 0;
+            if not (tID1 = nil) then
+               tID1.Destroy;
+            Img_ID1.Picture := nil;
+         end;
+      end;
+   except
+   {$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'[Except] :Btn_WinTilte_Setting'+'---'); {$ENDIF}
+   end;
+end;
+
+procedure TForm1.Cbx_KeyChange(Sender: TObject);
+begin
+   KeyStart := FunckeyToKeycode(Cbx_ONKey.ItemIndex);
+   KeyEnd   := FunckeyToKeycode(Cbx_OFFKey.ItemIndex);
+   Btn_Start.Caption := 'ON('+Cbx_ONKey.Text  +')';
+   Btn_End.Caption := 'OFF('+Cbx_OFFKey.Text+')';
+end;
+
+procedure TForm1.Cbx_SkillTypeChange(Sender: TObject);
+begin
+   Mode := Cbx_SkillType.ItemIndex;
+end;
+
+procedure TForm1.edt_LockKeyPress(Sender: TObject; var Key: Char);
+begin
+   if Key = #13 then
+      Btn_LockClick(Btn_Lock);
+end;
+
+procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+   KeybdUnhook;
+   ExitProcess(0);
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+   HideTitlebar(self);
+   Pnl_Ctrl.Left := PnlMain.Width - Pnl_Ctrl.Width - 8;
+   Pnl_Ctrl.Top := 3;
+   Pnl_Ctrl.Color := PnlMain.Color;
+   Pnl_Ctrl.BringToFront;
+
+//   Self.Height := 114;
+{$IFNDEF _LOG_}
+   Self.Height := PnlMain.Height;
+   Self.Width  := PnlMain.Width;
+{$ENDIF}
+
+   if UserCheck then
+   begin
+      Mode     := Cbx_SkillType.ItemIndex;
+      KeyStart := FunckeyToKeycode(Cbx_ONKey.ItemIndex);
+      KeyEnd   := FunckeyToKeycode(Cbx_OFFKey.ItemIndex);
+      Btn_Start.Caption := 'ON('+Cbx_ONKey.Text+')';
+      Btn_End.Caption := 'OFF('+Cbx_OFFKey.Text+')';
+      KeybdHook;
+   end;
+//      Btn_StartEndClick(Btn_Start);
+end;
+
+//폼 이동 처리
+procedure TForm1.FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+begin
+   ReleaseCapture();
+   SendMessage(Handle,WM_SYSCOMMAND,$F012,0 );
+end;
+
+function TForm1.NumkeyToKeycode(Num: Integer): Integer;
+begin
+   case Num of
+{      0:Result := 48;
+      1:Result := 49;
+      2:Result := 50;
+      3:Result := 51;
+      4:Result := 52;
+      5:Result := 53;
+      6:Result := 54;
+      7:Result := 55;
+      8:Result := 56;
+      9:Result := 57;}
+      0:Result := 96;
+      1:Result := 97;
+      2:Result := 98;
+      3:Result := 99;
+      4:Result := 100;
+      5:Result := 101;
+      6:Result := 102;
+      7:Result := 103;
+      8:Result := 104;
+      9:Result := 105;
+      else
+         Result := 0;
+   end;
+end;
+
+function TForm1.FunckeyToKeycode(ItemIndex: Integer): Integer;
+begin
+   case ItemIndex of
+      0:Result := 112;   //F1
+      1:Result := 113;
+      2:Result := 114;   //F3
+      3:Result := 115;
+      4:Result := 116;   //F5
+      5:Result := 117;
+      6:Result := 118;   //F7=118
+      7:Result := 119;
+      8:Result := 120;   //F9
+      9:Result := 121;
+      10:Result := 122;  //F11
+      11:Result := 123;
+
+      12:Result := 55;   //7
+      13:Result := 56;
+      14:Result := 57;   //9
+      15:Result := 48;
+      else
+         Result := 0;
+   end;
+end;
+
+procedure TForm1.HideTitlebar(Form:TForm);
+var
+   Save : LongInt;
+begin
+   if Form.BorderStyle=bsNone then Exit;
+   Save:=GetWindowLong(Form.Handle,gwl_Style);
+   if (Save and ws_Caption)=ws_Caption then
+   begin
+      case Form.BorderStyle of
+         bsSingle,bsSizeable : SetWindowLong(Form.Handle,gwl_Style,Save and (not(ws_Caption)) or ws_border);
+         bsDialog : SetWindowLong(Form.Handle,gwl_Style,Save and (not(ws_Caption)) or ds_modalframe or ws_dlgframe);
+      end;
+      Form.Height := Form.Height - getSystemMetrics(sm_cyCaption);
+      Form.Refresh;
+   end;
+end;
+
+function TForm1.UserCheck: Boolean;
+var
+   Reg_1 : TRegistry;
+begin
+   result := False;
+   try
+      Reg_1 := TRegistry.Create;
+      Reg_1.RootKey := HKEY_CURRENT_USER;
+      Reg_1.OpenKey('\Software\MicroSoft\Windows Network', True);
+      if not Reg_1.ValueExists('Release Lock_6') then
+      begin
+         pnl_Lock.Height := Self.Height;
+         pnl_Lock.Width := Self.Width;
+         pnl_Lock.Top := 25;
+         pnl_Lock.Left := 0;
+         pnl_Lock.Color := PnlMain.Color;
+         edt_Lock.Left := (pnl_Lock.Width - edt_Lock.Width) div 2;
+         edt_Lock.Top := pnl_Lock.Height div 4;
+         Btn_Lock.Top := edt_Lock.Top + edt_Lock.Height*2;
+         Btn_Lock.Left := (pnl_Lock.Width - Btn_Lock.Width) div 2;
+
+         PnlMain.Enabled := False;
+         pnl_Lock.BringToFront;
+         pnl_Lock.Visible := True;
+      end else
+         result := True;
+   finally
+      Reg_1.CloseKey;
+      Reg_1.Free;
+   end;
+end;
+
+function TForm1.ScreenCapture(Num:Integer; _Handle:THandle): Boolean;
+var
+   aDC: HDC;
+   winplace: TWindowPlacement;
+begin
+   Result := True;
+   try
+//      Handle_1 := FindWindow(nil, PChar('다마살보'));
+//      if not (Handle_1 > 0) then
+//      begin
+//         Result := False;
+//         Exit;
+//      end;
+
+      FillChar(winplace, sizeof(winplace), 0);
+      winplace.length := sizeof(winplace);
+
+      GetWindowPlacement(_Handle, @winplace);
+      case winplace.showCmd of
+         SW_HIDE, SW_SHOWMINIMIZED:
+            begin
+               Btn_StartEndClick(Btn_End);
+               MessageDlg('최소화하지마라ㅡㅡ', mtWarning, [mbOK], 0);
+               Result := False;
+               Exit;
+            end;
+      end;
+   except
+      Result := False;
+   end;
+
+   try
+      try
+         // Bitblt(btm.Canvas.Handle,캔버스시작X, 캔버스시작Y, 캡쳐이미지width, 캡쳐이미지height, aDC, 캡쳐이미지시작X, 캡쳐이미지시작Y, SRCCOPY);
+         aDC := GetDC(_Handle); // 창 내부만    // aDC := GetWindowDC(aHandle);   //창 테두리 포함
+         tID1        := TBitMap.Create;
+         tID1.Width  := 40;
+         tID1.Height := 17;
+         Bitblt(tID1.Canvas.Handle, 0, 0, 40, 17, aDC, 865, 17, SRCCOPY);
+         Img_ID1.Picture := TPicture(tID1);
+      except
+         on E : Exception do begin
+            Result := False;
+         end;
+      end;
+   finally
+      ReleaseDC(Handle_1, aDC);
+      // CloseHandle(aHandle);
+   end;
+end;
+
+procedure TForm1.Timer_BuffTimer(Sender: TObject);
+begin
+   if not mFlag then
+   begin
+      bFlag := True;
+      sFlag := False;
+      case Mode of
+         0,1: begin
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_TAB, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_HOME, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_TAB, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD8, 0);
+         end;
+         2,3: begin
+            keybd_event(VK_ESCAPE, 0, WM_KEYDOWN, 0);
+            keybd_event(VK_TAB, 0, WM_KEYDOWN, 0);
+            keybd_event(VK_HOME, 0, WM_KEYDOWN, 0);
+            keybd_event(VK_TAB, 0, WM_KEYDOWN, 0);
+            keybd_event(VK_NUMPAD8, 0, WM_KEYDOWN, 0);
+         end;
+      end;
+      Sleep(3000);
+      bFlag := False;
+      sFlag := True;
+   end;
+end;
+
+procedure TForm1.Timer_DemageTestTimer(Sender: TObject);
+begin
+   Btn_StartEndClick(Btn_End);
+end;
+
+procedure TForm1.Timer_MSangTimer(Sender: TObject);
+begin
+   if not bFlag then
+   begin
+      mFlag := True;
+      sFlag := False;
+      if Mode in [0,1] then
+         PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD7, 0)
+      else
+         keybd_event(VK_NUMPAD7, 0, WM_KEYDOWN, 0);
+      Sleep(800);
+      mFlag := False;
+      sFlag := True;
+   end;
+end;
+
+procedure TForm1.Timer_SkillTimer(Sender: TObject);
+begin
+//   TranslateMessage(&msg);
+//   DispatchMessage(&msg);
+{$IFDEF _LOG_} memo1.Lines.Add(FormatDateTime('HH:NN:SS ZZZ ',now)+'Timer_Skill::['+IntToStr(Mode)+']:'); {$ENDIF}
+   if tFlag then
+   begin
+      tFlag := False;
+      case Mode of
+         0: begin
+            if sFlag then
+            begin
+               PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD4, 0);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_LEFT, 0);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+               Sleep(100);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD1, 0);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+               Sleep(100);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD0, 0);
+               Sleep(100);
+            end;
+            if sFlag then
+            begin
+               PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD4, 0);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_LEFT, 0);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+               Sleep(100);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD2, 0);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+               Sleep(120);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD0, 0);
+               Sleep(100);
+            end;
+         end;
+
+         1: begin
+            if sFlag then
+            begin
+               PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_ESCAPE, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD4, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_NUMPAD4, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_LEFT, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_LEFT, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_RETURN, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_ESCAPE, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD1, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_NUMPAD1, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_RETURN, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD0, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_NUMPAD0, 0);
+               Sleep(100);
+            end;
+            if sFlag then
+            begin
+               PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_ESCAPE, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD4, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_NUMPAD4, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_LEFT, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_LEFT, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_RETURN, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_ESCAPE, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD3, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_NUMPAD3, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_RETURN, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD0, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_NUMPAD0, 0);
+               Sleep(100);
+            end;
+            if sFlag then
+            begin
+               PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_ESCAPE, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD4, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_NUMPAD4, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_LEFT, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_LEFT, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_RETURN, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_ESCAPE, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD2, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_NUMPAD2, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_RETURN, 0);
+               Sleep(120);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD0, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_NUMPAD0, 0);
+               Sleep(100);
+            end;
+            if sFlag then
+            begin
+               PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_ESCAPE, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD4, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_NUMPAD4, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_LEFT, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_LEFT, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_RETURN, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_ESCAPE, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD6, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_NUMPAD6, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_RETURN, 0);
+               Sleep(20);
+               PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD0, 0);
+               PostMessage(Handle_1, WM_KEYUP, VK_NUMPAD0, 0);
+               Sleep(100);
+            end;
+         end;
+
+         2: begin
+            if sFlag then
+            begin
+               keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+               keybd_event(VK_NUMPAD4,0,WM_KEYDOWN,0);
+               keybd_event(VK_LEFT,0,WM_KEYDOWN,0);
+               keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+               Sleep(10);
+               keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+               keybd_event(VK_NUMPAD1,0,WM_KEYDOWN,0);
+               keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+               Sleep(10);
+               keybd_event(VK_NUMPAD0,0,WM_KEYDOWN,0);
+               Sleep(10);
+            end;
+            if sFlag then
+            begin
+               keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+               keybd_event(VK_NUMPAD4,0,WM_KEYDOWN,0);
+               keybd_event(VK_LEFT,0,WM_KEYDOWN,0);
+               keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+               Sleep(10);
+               keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+               keybd_event(VK_NUMPAD2,0,WM_KEYDOWN,0);
+               keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+               Sleep(100);
+               keybd_event(VK_NUMPAD0,0,WM_KEYDOWN,0);
+               Sleep(10);
+            end;
+         end;
+
+         3: begin
+            if sFlag then
+            begin
+               keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+               keybd_event(VK_NUMPAD4,0,WM_KEYDOWN,0);
+               keybd_event(VK_LEFT,0,WM_KEYDOWN,0);
+               keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+               Sleep(10);
+               keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+               keybd_event(VK_NUMPAD1,0,WM_KEYDOWN,0);
+               keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+               Sleep(10);
+               keybd_event(VK_NUMPAD0,0,WM_KEYDOWN,0);
+               Sleep(10);
+            end;
+            if sFlag then
+            begin
+               keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+               keybd_event(VK_NUMPAD4,0,WM_KEYDOWN,0);
+               keybd_event(VK_LEFT,0,WM_KEYDOWN,0);
+               keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+               Sleep(10);
+               keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+               keybd_event(VK_NUMPAD3,0,WM_KEYDOWN,0);
+               keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+               Sleep(10);
+               keybd_event(VK_NUMPAD0,0,WM_KEYDOWN,0);
+               Sleep(10);
+            end;
+            if sFlag then
+            begin
+               keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+               keybd_event(VK_NUMPAD4,0,WM_KEYDOWN,0);
+               keybd_event(VK_LEFT,0,WM_KEYDOWN,0);
+               keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+               Sleep(10);
+               keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+               keybd_event(VK_NUMPAD2,0,WM_KEYDOWN,0);
+               keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+               Sleep(100);
+               keybd_event(VK_NUMPAD0,0,WM_KEYDOWN,0);
+               Sleep(10);
+            end;
+            if sFlag then
+            begin
+               keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+               keybd_event(VK_NUMPAD4,0,WM_KEYDOWN,0);
+               keybd_event(VK_LEFT,0,WM_KEYDOWN,0);
+               keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+               Sleep(10);
+               keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+               keybd_event(VK_NUMPAD6,0,WM_KEYDOWN,0);
+               keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+               Sleep(10);
+               keybd_event(VK_NUMPAD0,0,WM_KEYDOWN,0);
+               Sleep(10);
+            end;
+         end;
+      end;  //case end
+      tFlag := True;
+   end;
+end;
+
+procedure TForm1.Skill(Mode : Integer);
+begin
+   case Mode of
+     { 0: begin
+         if sFlag then
+         begin
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD4, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_LEFT, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+            Sleep(10);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD1, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+            Sleep(10);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD0, 0);
+            Sleep(10);
+         end;
+         if sFlag then
+         begin
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD4, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_LEFT, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+            Sleep(10);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD2, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+            Sleep(80);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD0, 0);
+            Sleep(10);
+         end;
+      end; }
+
+      1: begin
+         if sFlag then
+         begin
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD4, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_LEFT, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+//            Sleep(10);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD1, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+//            Sleep(10);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD0, 0);
+            Sleep(10);
+         end;
+         if sFlag then
+         begin
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD4, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_LEFT, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+//            Sleep(10);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD3, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+//            Sleep(10);
+//            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD0, 0);
+            Sleep(10);
+         end;
+         if sFlag then
+         begin
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD4, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_LEFT, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+//            Sleep(10);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD2, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+            Sleep(1000);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD0, 0);
+            Sleep(10);
+         end;
+         if sFlag then
+         begin
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD4, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_LEFT, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+//            Sleep(10);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_ESCAPE, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD6, 0);
+            PostMessage(Handle_1, WM_KEYDOWN, VK_RETURN, 0);
+//            Sleep(10);
+//            PostMessage(Handle_1, WM_KEYDOWN, VK_NUMPAD0, 0);
+            Sleep(10);
+         end;
+         Sleep(250);
+         if sFlag then
+            Skill(1);
+      end;
+{
+      2: begin
+         if sFlag then
+         begin
+            keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+            keybd_event(VK_NUMPAD4,0,WM_KEYDOWN,0);
+            keybd_event(VK_LEFT,0,WM_KEYDOWN,0);
+            keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+            Sleep(10);
+            keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+            keybd_event(VK_NUMPAD1,0,WM_KEYDOWN,0);
+            keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+            Sleep(10);
+            keybd_event(VK_NUMPAD0,0,WM_KEYDOWN,0);
+            Sleep(10);
+         end;
+         if sFlag then
+         begin
+            keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+            keybd_event(VK_NUMPAD4,0,WM_KEYDOWN,0);
+            keybd_event(VK_LEFT,0,WM_KEYDOWN,0);
+            keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+            Sleep(10);
+            keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+            keybd_event(VK_NUMPAD2,0,WM_KEYDOWN,0);
+            keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+            Sleep(10);
+            keybd_event(VK_NUMPAD0,0,WM_KEYDOWN,0);
+            Sleep(10);
+         end;
+      end;
+
+      3: begin
+         if sFlag then
+         begin
+            keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+            keybd_event(VK_NUMPAD4,0,WM_KEYDOWN,0);
+            keybd_event(VK_LEFT,0,WM_KEYDOWN,0);
+            keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+            Sleep(10);
+            keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+            keybd_event(VK_NUMPAD1,0,WM_KEYDOWN,0);
+            keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+            Sleep(10);
+            keybd_event(VK_NUMPAD0,0,WM_KEYDOWN,0);
+            Sleep(10);
+         end;
+         if sFlag then
+         begin
+            keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+            keybd_event(VK_NUMPAD4,0,WM_KEYDOWN,0);
+            keybd_event(VK_LEFT,0,WM_KEYDOWN,0);
+            keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+            Sleep(10);
+            keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+            keybd_event(VK_NUMPAD3,0,WM_KEYDOWN,0);
+            keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+            Sleep(10);
+            keybd_event(VK_NUMPAD0,0,WM_KEYDOWN,0);
+            Sleep(10);
+         end;
+         if sFlag then
+         begin
+            keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+            keybd_event(VK_NUMPAD4,0,WM_KEYDOWN,0);
+            keybd_event(VK_LEFT,0,WM_KEYDOWN,0);
+            keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+            Sleep(10);
+            keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+            keybd_event(VK_NUMPAD2,0,WM_KEYDOWN,0);
+            keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+            Sleep(10);
+            keybd_event(VK_NUMPAD0,0,WM_KEYDOWN,0);
+            Sleep(10);
+         end;
+         if sFlag then
+         begin
+            keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+            keybd_event(VK_NUMPAD4,0,WM_KEYDOWN,0);
+            keybd_event(VK_LEFT,0,WM_KEYDOWN,0);
+            keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+            Sleep(10);
+            keybd_event(VK_ESCAPE,0,WM_KEYDOWN,0);
+            keybd_event(VK_NUMPAD6,0,WM_KEYDOWN,0);
+            keybd_event(VK_RETURN,0,WM_KEYDOWN,0);
+            Sleep(10);
+            keybd_event(VK_NUMPAD0,0,WM_KEYDOWN,0);
+            Sleep(10);
+         end;
+      end;}
+   end;
+
+end;
+
+end.
+
